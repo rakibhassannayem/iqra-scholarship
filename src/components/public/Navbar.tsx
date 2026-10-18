@@ -16,7 +16,7 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="border-b bg-background">
+    <header className="sticky top-0 z-50 border-b bg-background">
       <nav className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4">
         <Link href="/" className="text-lg font-bold tracking-tight">
           {siteConfig.brandName}

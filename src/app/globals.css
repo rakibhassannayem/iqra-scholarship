@@ -138,6 +138,7 @@
   --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: oklch(0.72 0.11 150);
 }
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -147,5 +148,18 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@theme {
+  --animate-notice-marquee: notice-marquee-scroll 35s linear infinite;
+
+  @keyframes notice-marquee-scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
   }
 }
