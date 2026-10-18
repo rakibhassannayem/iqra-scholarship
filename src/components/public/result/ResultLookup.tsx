@@ -382,7 +382,7 @@ export default function ResultLookup() {
               </h3>
 
               <div className="overflow-x-auto rounded-xl border">
-                <table className="w-full min-w-[560px] text-left text-sm">
+                <table className="w-full min-w-140 text-left text-sm">
                   <thead className="bg-muted/60">
                     <tr>
                       <th className="px-4 py-3 font-semibold">Student ID</th>

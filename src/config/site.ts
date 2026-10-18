@@ -1,5 +1,7 @@
 export const siteConfig = {
-  name: "Scholarship Management System",
-  brandName: "Scholarship Management System",
-  description: "Scholarship registration, results, and scholarship management.",
+  // website name
+  name: "Iqra Scholarship",
+  // Brand Name of Navbar, Footer or logo 
+  brandName: "Iqra Scholarship",
+  description: "Scholarship management system of Iqra Noorani Talimul Quran",
 };
