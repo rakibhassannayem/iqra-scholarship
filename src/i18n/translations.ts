@@ -3,6 +3,7 @@ export const translations = {
     // Navbar
     home: "হোম",
     about: "আমাদের সম্পর্কে",
+    notice: "নোটিশ",
     contact: "যোগাযোগ",
     register: "নিবন্ধন",
     result: "ফলাফল দেখুন",
@@ -43,6 +44,7 @@ export const translations = {
     // Navbar
     home: "Home",
     about: "About Us",
+    notice: "Notice",
     contact: "Contact",
     register: "Register",
     result: "Check Result",
