@@ -1,5 +1,5 @@
-import NoticeHero from "@/components/public/notice/NoticeHero";
-import NoticeTable from "@/components/public/notice/NoticeTable";
+import NoticeHero from "@/components/public/notices/NoticeHero";
+import NoticeTable from "@/components/public/notices/NoticeTable";
 
 export default function NoticePage() {
   return (
