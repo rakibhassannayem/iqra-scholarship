@@ -4,6 +4,7 @@ import {
   varchar,
   timestamp,
   integer,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 export const institutions = pgTable("institutions", {
@@ -23,4 +24,18 @@ export const students = pgTable("students", {
   class: integer("class").notNull(),
   roll: integer("roll").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const scholarships = pgTable("scholarships", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: varchar("description", { length: 2000 }).notNull(),
+  academicYear: varchar("academic_year", { length: 20 }).notNull(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  amount: integer("amount").notNull(),
+  eligibility: varchar("eligibility", { length: 2000 }).notNull(),
+  isActive: boolean("is_active").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

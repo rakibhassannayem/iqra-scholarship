@@ -15,6 +15,13 @@
       "when": 1792399016816,
       "tag": "0001_charming_risque",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792408313710,
+      "tag": "0002_steep_warbound",
+      "breakpoints": true
     }
   ]
 }
