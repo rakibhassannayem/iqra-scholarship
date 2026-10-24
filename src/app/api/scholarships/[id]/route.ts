@@ -192,11 +192,37 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     updates.updatedAt = new Date();
 
-    const [updatedScholarship] = await db
-      .update(scholarships)
-      .set(updates)
-      .where(eq(scholarships.id, id))
-      .returning();
+    let updatedScholarship;
+
+    if (updates.isActive === true) {
+      updatedScholarship = await db.transaction(async (tx) => {
+        // আগের active scholarship-গুলো inactive করা
+        await tx
+          .update(scholarships)
+          .set({
+            isActive: false,
+            updatedAt: new Date(),
+          })
+          .where(eq(scholarships.isActive, true));
+
+        // নির্বাচিত scholarship update করে active করা
+        const [updated] = await tx
+          .update(scholarships)
+          .set(updates)
+          .where(eq(scholarships.id, id))
+          .returning();
+
+        return updated;
+      });
+    } else {
+      const [updated] = await db
+        .update(scholarships)
+        .set(updates)
+        .where(eq(scholarships.id, id))
+        .returning();
+
+      updatedScholarship = updated;
+    }
 
     return NextResponse.json({
       message: "Scholarship updated successfully",
