@@ -269,8 +269,30 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
   } catch (error) {
     console.error("DELETE scholarship error:", error);
 
+    const cause =
+      typeof error === "object" && error !== null && "cause" in error
+        ? error.cause
+        : null;
+
+    const errorCode =
+      typeof cause === "object" && cause !== null && "code" in cause
+        ? cause.code
+        : typeof error === "object" && error !== null && "code" in error
+          ? error.code
+          : undefined;
+
+    if (errorCode === "23503") {
+      return NextResponse.json(
+        {
+          message:
+            "This scholarship has registrations and cannot be deleted. Deactivate it instead.",
+        },
+        { status: 409 },
+      );
+    }
+
     return NextResponse.json(
-      { message: "Failed to delete scholarship" },
+      { message: "Failed to delete scholarship." },
       { status: 500 },
     );
   }

@@ -40,6 +40,7 @@ export default function ScholarshipsPage() {
 
   const [deleteTarget, setDeleteTarget] = useState<Scholarship | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const fetchScholarships = useCallback(async () => {
     setLoading(true);
@@ -141,6 +142,7 @@ export default function ScholarshipsPage() {
     if (!deleteTarget) return;
 
     setDeleting(true);
+    setDeleteError("");
     setError("");
     setSuccess("");
 
@@ -158,7 +160,7 @@ export default function ScholarshipsPage() {
       setSuccess("Scholarship deleted successfully.");
       await fetchScholarships();
     } catch (err) {
-      setError(
+      setDeleteError(
         err instanceof Error ? err.message : "Failed to delete scholarship.",
       );
     } finally {
@@ -198,7 +200,10 @@ export default function ScholarshipsPage() {
         scholarships={scholarships}
         loading={loading}
         onEdit={openEditForm}
-        onDelete={setDeleteTarget}
+        onDelete={(scholarship) => {
+          setDeleteError("");
+          setDeleteTarget(scholarship);
+        }}
       />
 
       <ScholarshipForm
@@ -215,7 +220,10 @@ export default function ScholarshipsPage() {
       <AlertDialog
         open={deleteTarget !== null}
         onOpenChange={(open) => {
-          if (!open && !deleting) setDeleteTarget(null);
+          if (!open && !deleting) {
+            setDeleteTarget(null);
+            setDeleteError("");
+          }
         }}
       >
         <AlertDialogContent>
@@ -225,6 +233,11 @@ export default function ScholarshipsPage() {
               Are you sure you want to delete &quot;
               {deleteTarget?.name}&quot;? This action cannot be undone.
             </AlertDialogDescription>
+            {deleteError && (
+              <p role="alert" className="text-sm text-destructive">
+                {deleteError}
+              </p>
+            )}
           </AlertDialogHeader>
 
           <AlertDialogFooter>
