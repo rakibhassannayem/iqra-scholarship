@@ -10,11 +10,20 @@ type Institution = {
   eiin: string;
 };
 
+type Scholarship = {
+  id: number;
+  isActive: boolean;
+};
+
 export default function RegisterForm() {
   const { language } = useLanguage();
   const isBangla = language === "bn";
 
   const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [hasActiveScholarship, setHasActiveScholarship] = useState(false);
+  const [checkingScholarship, setCheckingScholarship] = useState(true);
+  const [scholarshipCheckFailed, setScholarshipCheckFailed] = useState(false);
+
   const [institutionName, setInstitutionName] = useState("");
   const [selectedInstitution, setSelectedInstitution] =
     useState<Institution | null>(null);
@@ -51,7 +60,33 @@ export default function RegisterForm() {
       }
     }
 
+    async function checkActiveScholarship() {
+      try {
+        setCheckingScholarship(true);
+        setScholarshipCheckFailed(false);
+
+        const response = await fetch("/api/scholarships");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch scholarships.");
+        }
+
+        const data: Scholarship[] = await response.json();
+
+        setHasActiveScholarship(
+          data.some((scholarship) => scholarship.isActive),
+        );
+      } catch (error) {
+        console.error("Failed to check active scholarship:", error);
+        setScholarshipCheckFailed(true);
+        setHasActiveScholarship(false);
+      } finally {
+        setCheckingScholarship(false);
+      }
+    }
+
     fetchInstitutions();
+    checkActiveScholarship();
   }, [isBangla]);
 
   const filteredInstitutions = institutions.filter((institution) =>
@@ -152,6 +187,47 @@ export default function RegisterForm() {
     }
   }
 
+  if (checkingScholarship) {
+    return (
+      <section className="bg-background px-4 py-16 text-center">
+        <p className="text-muted-foreground">
+          {isBangla
+            ? "বৃত্তির তথ্য যাচাই করা হচ্ছে..."
+            : "Checking scholarship availability..."}
+        </p>
+      </section>
+    );
+  }
+
+  if (!hasActiveScholarship || scholarshipCheckFailed) {
+    return (
+      <section className="bg-background px-4 py-16">
+        <div className="mx-auto max-w-3xl rounded-2xl border bg-card p-8 text-center shadow-sm">
+          <GraduationCap className="mx-auto mb-4 size-10 text-muted-foreground" />
+
+          <h2 className="text-xl font-bold sm:text-2xl">
+            {scholarshipCheckFailed
+              ? isBangla
+                ? "বৃত্তির তথ্য লোড করা যায়নি"
+                : "Unable to Check Scholarship"
+              : isBangla
+                ? "কোনো সক্রিয় বৃত্তি নেই"
+                : "No Active Scholarship Available"}
+          </h2>
+
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            {scholarshipCheckFailed
+              ? isBangla
+                ? "অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।"
+                : "Please try again later."
+              : isBangla
+                ? "বর্তমানে কোনো বৃত্তির আবেদন কার্যক্রম চালু নেই। অনুগ্রহ করে পরবর্তীতে আবার চেষ্টা করুন।"
+                : "There is currently no open scholarship application. Please check again later."}
+          </p>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="bg-background px-4 py-16 sm:py-20">
       <div className="mx-auto max-w-3xl">

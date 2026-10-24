@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { institutions, students } from "@/lib/db/schema";
+import {
+  institutions,
+  students,
+  scholarships,
+  scholarshipRegistrations,
+} from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function GET() {
@@ -51,21 +56,56 @@ export async function POST(request: Request) {
       );
     }
 
+    const [activeScholarship] = await db
+      .select()
+      .from(scholarships)
+      .where(eq(scholarships.isActive, true))
+      .limit(1);
+
+    if (!activeScholarship) {
+      return NextResponse.json(
+        {
+          message:
+            "Student registration is currently closed because no scholarship is active.",
+        },
+        { status: 409 },
+      );
+    }
+
     const year = String(new Date().getFullYear()).slice(-2);
     const studentId = `${year}${institution.eiin}${studentClass}${roll}`;
 
-    const [student] = await db
-      .insert(students)
-      .values({
-        studentId,
-        institutionId,
-        name: name.trim(),
-        class: studentClass,
-        roll,
-      })
-      .returning();
+    const result = await db.transaction(async (tx) => {
+      const [student] = await tx
+        .insert(students)
+        .values({
+          studentId,
+          institutionId,
+          name: name.trim(),
+          class: studentClass,
+          roll,
+        })
+        .returning();
 
-    return NextResponse.json(student, { status: 201 });
+      const [registration] = await tx
+        .insert(scholarshipRegistrations)
+        .values({
+          studentId: student.id,
+          scholarshipId: activeScholarship.id,
+        })
+        .returning();
+
+      return { student, registration };
+    });
+
+    return NextResponse.json(
+      {
+        message: "Student registered successfully.",
+        student: result.student,
+        scholarshipRegistration: result.registration,
+      },
+      { status: 201 },
+    );
   } catch (error) {
     console.error("Failed to create student:", error);
 

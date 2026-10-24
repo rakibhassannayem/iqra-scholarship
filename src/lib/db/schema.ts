@@ -5,6 +5,7 @@ import {
   timestamp,
   integer,
   boolean,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const institutions = pgTable("institutions", {
@@ -39,3 +40,26 @@ export const scholarships = pgTable("scholarships", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+export const scholarshipRegistrations = pgTable(
+  "scholarship_registrations",
+  {
+    id: serial("id").primaryKey(),
+
+    studentId: integer("student_id")
+      .notNull()
+      .references(() => students.id),
+
+    scholarshipId: integer("scholarship_id")
+      .notNull()
+      .references(() => scholarships.id),
+
+    registeredAt: timestamp("registered_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("student_scholarship_unique").on(
+      table.studentId,
+      table.scholarshipId,
+    ),
+  ],
+);
