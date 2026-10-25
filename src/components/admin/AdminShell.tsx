@@ -6,13 +6,16 @@ import {
   LayoutDashboard,
   GraduationCap,
   School,
-  Users,
+  UserGroup,
   Menu,
   X,
   Wallet,
-  Megaphone
+  Megaphone,
+  UserShield
 } from "lucide-react";
 import { useState } from "react";
+import SignOutButton from "./SignOutButton";
+import { useSession } from "next-auth/react";
 
 const navigation = [
   {
@@ -33,7 +36,7 @@ const navigation = [
   {
     title: "Students",
     href: "/admin/students",
-    icon: Users,
+    icon: UserGroup,
   },
   {
     title: "Payments",
@@ -45,6 +48,11 @@ const navigation = [
     href: "/admin/notices",
     icon: Megaphone,
   },
+  {
+    title: "Users",
+    href: "/admin/users",
+    icon: UserShield,
+  },
 ];
 
 export default function AdminShell({
@@ -53,6 +61,7 @@ export default function AdminShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -129,10 +138,12 @@ export default function AdminShell({
           })}
         </nav>
 
-        <div className="border-t p-4">
-          <p className="text-xs text-muted-foreground">
+        <div className="mt-auto border-t p-4">
+          <p className="mb-3 text-xs text-muted-foreground">
             Iqra Noorani Talimul Quran
           </p>
+
+          <SignOutButton />
         </div>
       </aside>
 
@@ -162,8 +173,8 @@ export default function AdminShell({
             </div>
           </div>
 
-          <div className="rounded-full border bg-card px-3 py-1.5 text-xs font-medium">
-            Administrator
+          <div className="rounded-full border bg-card px-3 py-1.5 text-sm font-medium">
+            {session?.user?.name ?? "AdminName"}
           </div>
         </header>
 

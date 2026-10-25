@@ -2,19 +2,50 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import { Mail, Lock, ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const router = useRouter();
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    // Authentication will be connected later.
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Invalid email or password.");
+        return;
+      }
+
+      if (result?.ok) {
+        router.push("/admin");
+        return;
+      }
+
+      setError("Something went wrong. Please try again.");
+    } catch {
+      setError("Unable to sign in. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -80,9 +111,15 @@ export default function AdminLoginPage() {
             </div>
           </div>
 
-          <Button type="submit" className="w-full">
-            Sign In
-            <ArrowRight className="ml-2 size-4" />
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Signing in..." : "Sign In"}
+            {!isLoading && <ArrowRight className="ml-2 size-4" />}
           </Button>
         </form>
       </div>

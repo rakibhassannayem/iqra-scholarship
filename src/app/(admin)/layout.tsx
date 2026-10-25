@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AdminShell from "@/components/admin/AdminShell";
+import AuthSessionProvider from "@/providers/SessionProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -13,5 +14,9 @@ export default function AdminLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <AdminShell>{children}</AdminShell>;
+  return (
+    <AuthSessionProvider>
+      <AdminShell>{children}</AdminShell>
+    </AuthSessionProvider>
+  );
 }
