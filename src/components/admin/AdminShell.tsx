@@ -9,6 +9,8 @@ import {
   Users,
   Menu,
   X,
+  Wallet,
+  Megaphone
 } from "lucide-react";
 import { useState } from "react";
 
@@ -32,6 +34,16 @@ const navigation = [
     title: "Students",
     href: "/admin/students",
     icon: Users,
+  },
+  {
+    title: "Payments",
+    href: "/admin/payments",
+    icon: Wallet,
+  },
+  {
+    title: "Notices",
+    href: "/admin/notices",
+    icon: Megaphone,
   },
 ];
 
