@@ -72,3 +72,11 @@ export const users = pgTable("users", {
   role: varchar("role", { length: 50 }).notNull().default("admin"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const notices = pgTable("notices", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: varchar("content", { length: 5000 }).notNull(),
+  isPublished: boolean("is_published").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

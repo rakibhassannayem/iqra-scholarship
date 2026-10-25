@@ -7,11 +7,12 @@ import {
   GraduationCap,
   School,
   UserGroup,
+  ClipboardPenLine,
   Menu,
   X,
   Wallet,
   Megaphone,
-  UserShield
+  UserShield,
 } from "lucide-react";
 import { useState } from "react";
 import SignOutButton from "./SignOutButton";
@@ -37,6 +38,11 @@ const navigation = [
     title: "Students",
     href: "/admin/students",
     icon: UserGroup,
+  },
+  {
+    title: "Registrations",
+    href: "/admin/registrations",
+    icon: ClipboardPenLine,
   },
   {
     title: "Payments",

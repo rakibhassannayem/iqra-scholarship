@@ -36,6 +36,13 @@
       "when": 1792838296430,
       "tag": "0004_panoramic_stature",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792915546318,
+      "tag": "0005_tearful_prodigy",
+      "breakpoints": true
     }
   ]
 }
