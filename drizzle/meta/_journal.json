@@ -50,6 +50,13 @@
       "when": 1792996140020,
       "tag": "0006_tearful_mastermind",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793011818653,
+      "tag": "0007_living_clint_barton",
+      "breakpoints": true
     }
   ]
 }

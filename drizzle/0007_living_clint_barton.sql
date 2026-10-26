@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "scholarship_categories_name_lower_unique" ON "scholarship_categories" USING btree (lower("name"));

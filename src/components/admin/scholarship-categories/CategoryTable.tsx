@@ -1,6 +1,12 @@
 "use client";
 
-import { Pencil, RefreshCw, ToggleLeft, ToggleRight } from "lucide-react";
+import {
+  Pencil,
+  RefreshCw,
+  ToggleLeft,
+  ToggleRight,
+  Trash2,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +25,7 @@ type CategoryTableProps = {
   updatingId: number | null;
   onEdit: (category: Category) => void;
   onToggleActive: (category: Category) => void;
+  onDelete: (category: Category) => void;
 };
 
 export default function CategoryTable({
@@ -27,6 +34,7 @@ export default function CategoryTable({
   updatingId,
   onEdit,
   onToggleActive,
+  onDelete,
 }: CategoryTableProps) {
   if (loading) {
     return (
@@ -98,6 +106,14 @@ export default function CategoryTable({
                         <ToggleRight />
                       )}
                       {category.isActive ? "Deactivate" : "Activate"}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={updating}
+                      onClick={() => onDelete(category)}
+                    >
+                      <Trash2 />
                     </Button>
                   </div>
                 </TableCell>

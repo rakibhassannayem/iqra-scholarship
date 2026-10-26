@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import { auth } from "../../../../auth";
 import { db } from "@/lib/db";
-import { scholarshipCategories } from "@/lib/db/schema";
+import { scholarshipCategories, scholarshipGrants } from "@/lib/db/schema";
 
 export async function GET() {
   try {
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     const existing = await db
       .select({ id: scholarshipCategories.id })
       .from(scholarshipCategories)
-      .where(eq(scholarshipCategories.name, name))
+      .where(sql`lower(${scholarshipCategories.name}) = lower(${name})`)
       .limit(1);
 
     if (existing.length > 0) {
@@ -205,6 +205,65 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json(
       { message: "Failed to update scholarship category." },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await auth();
+
+    if (!session?.user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const id = Number(new URL(request.url).searchParams.get("id"));
+
+    if (!Number.isInteger(id) || id <= 0) {
+      return NextResponse.json(
+        { message: "Invalid category ID." },
+        { status: 400 },
+      );
+    }
+
+    // Check whether this category is used by any scholarship grant.
+    const existingGrant = await db
+      .select({ id: scholarshipGrants.id })
+      .from(scholarshipGrants)
+      .where(eq(scholarshipGrants.categoryId, id))
+      .limit(1);
+
+    if (existingGrant.length > 0) {
+      return NextResponse.json(
+        {
+          message:
+            "This category cannot be deleted because it is used by scholarship grants.",
+        },
+        { status: 409 },
+      );
+    }
+
+    const [deletedCategory] = await db
+      .delete(scholarshipCategories)
+      .where(eq(scholarshipCategories.id, id))
+      .returning({ id: scholarshipCategories.id });
+
+    if (!deletedCategory) {
+      return NextResponse.json(
+        { message: "Category not found." },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({
+      message: "Category deleted successfully.",
+    });
+  } catch (error) {
+    console.error("DELETE scholarship category error:", error);
+
+    return NextResponse.json(
+      { message: "Failed to delete category." },
       { status: 500 },
     );
   }

@@ -172,6 +172,44 @@ export default function ScholarshipCategoriesPage() {
     }
   }
 
+  async function handleDelete(category: Category) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete "${category.name}"? This action cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    setUpdatingId(category.id);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch(
+        `/api/scholarship-categories?id=${category.id}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete category.");
+      }
+
+      setSuccess("Category deleted successfully.");
+      await fetchCategories();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to delete category.",
+      );
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -208,6 +246,7 @@ export default function ScholarshipCategoriesPage() {
         updatingId={updatingId}
         onEdit={openEditDialog}
         onToggleActive={handleToggleActive}
+        onDelete={handleDelete}
       />
 
       <CategoryForm

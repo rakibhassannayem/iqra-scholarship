@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   serial,
@@ -41,14 +42,22 @@ export const scholarships = pgTable("scholarships", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const scholarshipCategories = pgTable("scholarship_categories", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull().unique(),
-  description: varchar("description", { length: 1000 }),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const scholarshipCategories = pgTable(
+  "scholarship_categories",
+  {
+    id: serial("id").primaryKey(),
+    name: varchar("name", { length: 100 }).notNull().unique(),
+    description: varchar("description", { length: 1000 }),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("scholarship_categories_name_lower_unique").on(
+      sql`lower(${table.name})`,
+    ),
+  ],
+);
 
 export const scholarshipGrants = pgTable(
   "scholarship_grants",
