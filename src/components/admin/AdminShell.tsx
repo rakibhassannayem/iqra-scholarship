@@ -45,11 +45,6 @@ const navigation = [
     icon: ClipboardPenLine,
   },
   {
-    title: "Payments",
-    href: "/admin/payments",
-    icon: Wallet,
-  },
-  {
     title: "Notices",
     href: "/admin/notices",
     icon: Megaphone,

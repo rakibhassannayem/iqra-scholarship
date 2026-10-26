@@ -31,7 +31,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .where(eq(users.email, email))
           .limit(1);
 
-        if (!user || user.role !== "admin") {
+        if (!user || !["admin", "superadmin"].includes(user.role)) {
           return null;
         }
 
@@ -61,7 +61,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   callbacks: {
     async authorized({ auth }) {
-      return !!auth?.user && auth.user.role === "admin";
+      return (
+        !!auth?.user && ["admin", "superadmin"].includes(auth.user.role ?? "")
+      );
     },
 
     async jwt({ token, user }) {
