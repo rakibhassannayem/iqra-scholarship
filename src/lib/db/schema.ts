@@ -41,6 +41,52 @@ export const scholarships = pgTable("scholarships", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const scholarshipCategories = pgTable("scholarship_categories", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  description: varchar("description", { length: 1000 }),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const scholarshipGrants = pgTable(
+  "scholarship_grants",
+  {
+    id: serial("id").primaryKey(),
+
+    studentId: integer("student_id")
+      .notNull()
+      .references(() => students.id),
+
+    scholarshipId: integer("scholarship_id")
+      .notNull()
+      .references(() => scholarships.id),
+
+    categoryId: integer("category_id")
+      .notNull()
+      .references(() => scholarshipCategories.id, {
+        onDelete: "restrict",
+      }),
+
+    awardAmount: integer("award_amount").notNull(),
+
+    status: varchar("status", { length: 30 }).notNull().default("granted"),
+
+    grantedAt: timestamp("granted_at").defaultNow().notNull(),
+
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("student_scholarship_grant_unique").on(
+      table.studentId,
+      table.scholarshipId,
+    ),
+  ],
+);
+
 export const scholarshipRegistrations = pgTable(
   "scholarship_registrations",
   {

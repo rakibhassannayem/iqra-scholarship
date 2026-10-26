@@ -43,6 +43,13 @@
       "when": 1792915546318,
       "tag": "0005_tearful_prodigy",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792996140020,
+      "tag": "0006_tearful_mastermind",
+      "breakpoints": true
     }
   ]
 }

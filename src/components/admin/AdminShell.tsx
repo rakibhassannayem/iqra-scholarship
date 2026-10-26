@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   GraduationCap,
+  ChartColumnStacked,
   School,
   UserGroup,
   ClipboardPenLine,
   Menu,
   X,
-  Wallet,
+  Award,
   Megaphone,
   UserShield,
 } from "lucide-react";
@@ -30,6 +31,11 @@ const navigation = [
     icon: GraduationCap,
   },
   {
+    title: "Scholarships Category",
+    href: "/admin/scholarship-categories",
+    icon: ChartColumnStacked,
+  },
+  {
     title: "Institutions",
     href: "/admin/institutions",
     icon: School,
@@ -43,6 +49,11 @@ const navigation = [
     title: "Registrations",
     href: "/admin/registrations",
     icon: ClipboardPenLine,
+  },
+  {
+    title: "Grants",
+    href: "/admin/grants",
+    icon: Award,
   },
   {
     title: "Notices",

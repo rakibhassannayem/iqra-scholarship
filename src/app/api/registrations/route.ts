@@ -13,9 +13,11 @@ export async function GET() {
     const registrations = await db
       .select({
         id: scholarshipRegistrations.id,
+        studentDbId: students.id,
         studentId: students.studentId,
         studentName: students.name,
         institutionName: institutions.name,
+        scholarshipId: scholarships.id,
         scholarshipName: scholarships.name,
         registeredAt: scholarshipRegistrations.registeredAt,
       })
