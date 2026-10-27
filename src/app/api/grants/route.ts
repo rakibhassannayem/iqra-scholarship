@@ -29,6 +29,10 @@ export async function GET() {
         categoryName: scholarshipCategories.name,
         awardAmount: scholarshipGrants.awardAmount,
         status: scholarshipGrants.status,
+        prizeStatus: scholarshipGrants.prizeStatus,
+        prizeReceivedAt: scholarshipGrants.prizeReceivedAt,
+        confirmedBy: scholarshipGrants.confirmedBy,
+        prizeNotes: scholarshipGrants.prizeNotes,
         grantedAt: scholarshipGrants.grantedAt,
         createdAt: scholarshipGrants.createdAt,
       })

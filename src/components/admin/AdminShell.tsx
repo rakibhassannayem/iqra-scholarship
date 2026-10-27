@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   Award,
+  Trophy,
   Megaphone,
   UserShield,
 } from "lucide-react";
@@ -49,6 +50,11 @@ const navigation = [
     title: "Grants",
     href: "/admin/grants",
     icon: Award,
+  },
+  {
+    title: "Prize Confirmation",
+    href: "/admin/prizes",
+    icon: Trophy,
   },
   {
     title: "Notices",

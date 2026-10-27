@@ -84,6 +84,16 @@ export const scholarshipGrants = pgTable(
 
     status: varchar("status", { length: 30 }).notNull().default("granted"),
 
+    prizeStatus: varchar("prize_status", { length: 30 })
+      .notNull()
+      .default("pending"),
+
+    prizeReceivedAt: timestamp("prize_received_at"),
+
+    confirmedBy: varchar("confirmed_by", { length: 255 }),
+
+    prizeNotes: varchar("prize_notes", { length: 500 }),
+
     grantedAt: timestamp("granted_at").defaultNow().notNull(),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
