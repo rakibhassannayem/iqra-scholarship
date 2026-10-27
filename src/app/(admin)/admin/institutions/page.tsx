@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -20,6 +20,7 @@ import InstitutionForm, {
 import InstitutionTable, {
   type Institution,
 } from "@/components/admin/institutions/InstitutionTable";
+import InstitutionDetailsModal from "@/components/admin/institutions/InstitutionDetailsModal";
 
 export default function InstitutionsPage() {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
@@ -32,6 +33,8 @@ export default function InstitutionsPage() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingInstitution, setEditingInstitution] =
+    useState<Institution | null>(null);
+  const [viewingInstitution, setViewingInstitution] =
     useState<Institution | null>(null);
   const [formValues, setFormValues] =
     useState<InstitutionFormValues>(emptyInstitutionForm);
@@ -77,6 +80,16 @@ export default function InstitutionsPage() {
     setFormValues({
       name: institution.name,
       eiin: institution.eiin,
+      principal: institution.principal || "",
+      principalPhone: institution.principalPhone || "",
+      representative: institution.representative || "",
+      representativePhone: institution.representativePhone || "",
+      division: institution.division || "",
+      district: institution.district || "",
+      upazila: institution.upazila || "",
+      village: institution.village || "",
+      block: institution.block || "",
+      address: institution.address || "",
     });
     setError("");
     setSuccess("");
@@ -115,8 +128,8 @@ export default function InstitutionsPage() {
 
       setSuccess(
         editing
-          ? "Institution updated successfully."
-          : "Institution created successfully.",
+          ? `Institution "${values.name}" updated successfully.`
+          : `Institution "${values.name}" created successfully.`,
       );
 
       await fetchInstitutions();
@@ -162,39 +175,72 @@ export default function InstitutionsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Institutions</h2>
+          <h1 className="text-2xl font-bold tracking-tight">Institutions</h1>
           <p className="text-sm text-muted-foreground">
-            Create and manage registered institutions.
+            Manage participating schools, madrasas, contacts, and address information.
           </p>
         </div>
 
-        <Button onClick={openCreateForm}>
-          <Plus />
-          Add Institution
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchInstitutions}
+            disabled={loading}
+            className="gap-1.5"
+          >
+            <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+
+          <Button onClick={openCreateForm} className="gap-1.5">
+            <Plus className="size-4" />
+            Add Institution
+          </Button>
+        </div>
       </div>
 
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
+      {/* Notifications */}
+      {error && !formOpen && (
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          <AlertCircle className="size-4 shrink-0" />
+          <span>{error}</span>
+        </div>
       )}
 
       {success && (
-        <p role="status" className="text-sm text-green-700 dark:text-green-400">
-          {success}
-        </p>
+        <div className="flex items-center gap-2 rounded-lg border border-green-600/30 bg-green-600/10 p-4 text-sm text-green-700 dark:text-green-400">
+          <CheckCircle2 className="size-4 shrink-0" />
+          <span>{success}</span>
+        </div>
       )}
 
+      {/* Table */}
       <InstitutionTable
         institutions={institutions}
         loading={loading}
+        onView={(inst) => setViewingInstitution(inst)}
         onEdit={openEditForm}
         onDelete={setDeleteTarget}
       />
 
+      {/* Details View Modal */}
+      <InstitutionDetailsModal
+        institution={viewingInstitution}
+        open={Boolean(viewingInstitution)}
+        onOpenChange={(open) => {
+          if (!open) setViewingInstitution(null);
+        }}
+        onEdit={(inst) => {
+          setViewingInstitution(null);
+          openEditForm(inst);
+        }}
+      />
+
+      {/* Create / Edit Form Modal */}
       <InstitutionForm
         key={editingInstitution?.id ?? "new-institution"}
         open={formOpen}
@@ -206,6 +252,7 @@ export default function InstitutionsPage() {
         onSubmit={handleSubmit}
       />
 
+      {/* Delete Confirmation Alert */}
       <AlertDialog
         open={deleteTarget !== null}
         onOpenChange={(open) => {
@@ -233,8 +280,9 @@ export default function InstitutionsPage() {
                 event.preventDefault();
                 void handleDelete();
               }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleting ? "Deleting..." : "Delete"}
+              {deleting ? "Deleting..." : "Delete Institution"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,12 +1,26 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { institutions } from "@/lib/db/schema";
+import { desc } from "drizzle-orm";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    const { name, eiin } = body;
+    const {
+      name,
+      eiin,
+      principal,
+      principalPhone,
+      representative,
+      representativePhone,
+      division,
+      district,
+      upazila,
+      village,
+      block,
+      address,
+    } = body;
 
     if (
       typeof name !== "string" ||
@@ -25,6 +39,21 @@ export async function POST(request: Request) {
       .values({
         name: name.trim(),
         eiin: eiin.trim(),
+        principal: typeof principal === "string" ? principal.trim() : null,
+        principalPhone:
+          typeof principalPhone === "string" ? principalPhone.trim() : null,
+        representative:
+          typeof representative === "string" ? representative.trim() : null,
+        representativePhone:
+          typeof representativePhone === "string"
+            ? representativePhone.trim()
+            : null,
+        division: typeof division === "string" ? division.trim() : null,
+        district: typeof district === "string" ? district.trim() : null,
+        upazila: typeof upazila === "string" ? upazila.trim() : null,
+        village: typeof village === "string" ? village.trim() : null,
+        block: typeof block === "string" ? block.trim() : null,
+        address: typeof address === "string" ? address.trim() : null,
       })
       .returning();
 
@@ -33,7 +62,7 @@ export async function POST(request: Request) {
     console.error("Failed to create institution:", error);
 
     return NextResponse.json(
-      { message: "Failed to create institution." },
+      { message: "Failed to create institution. EIIN might already exist." },
       { status: 500 },
     );
   }
@@ -41,7 +70,10 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
-    const allInstitutions = await db.select().from(institutions);
+    const allInstitutions = await db
+      .select()
+      .from(institutions)
+      .orderBy(desc(institutions.createdAt));
 
     return NextResponse.json(allInstitutions);
   } catch (error) {

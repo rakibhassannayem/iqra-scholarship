@@ -13,6 +13,21 @@ export const institutions = pgTable("institutions", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   eiin: varchar("eiin", { length: 20 }).notNull().unique(),
+
+  // Leadership & Contact
+  principal: varchar("principal", { length: 255 }),
+  principalPhone: varchar("principal_phone", { length: 30 }),
+  representative: varchar("representative", { length: 255 }),
+  representativePhone: varchar("representative_phone", { length: 30 }),
+
+  // Address
+  division: varchar("division", { length: 100 }),
+  district: varchar("district", { length: 100 }),
+  upazila: varchar("upazila", { length: 100 }),
+  village: varchar("village", { length: 255 }),
+  block: varchar("block", { length: 100 }),
+  address: varchar("address", { length: 500 }),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

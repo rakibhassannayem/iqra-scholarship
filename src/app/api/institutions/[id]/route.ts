@@ -55,35 +55,94 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     }
 
     const body = await request.json();
-    const { name, eiin } = body;
+    const {
+      name,
+      eiin,
+      principal,
+      principalPhone,
+      representative,
+      representativePhone,
+      division,
+      district,
+      upazila,
+      village,
+      block,
+      address,
+    } = body;
 
-    if (
-      (name === undefined || (typeof name === "string" && name.trim())) &&
-      (eiin === undefined || (typeof eiin === "string" && eiin.trim())) &&
-      (name !== undefined || eiin !== undefined)
-    ) {
-      // At least one valid field is provided.
-    } else {
+    const updates: Record<string, string | null> = {};
+
+    if (name !== undefined) {
+      if (typeof name !== "string" || !name.trim()) {
+        return NextResponse.json(
+          { message: "Name must be a non-empty string." },
+          { status: 400 },
+        );
+      }
+      updates.name = name.trim();
+    }
+
+    if (eiin !== undefined) {
+      if (typeof eiin !== "string" || !eiin.trim()) {
+        return NextResponse.json(
+          { message: "EIIN must be a non-empty string." },
+          { status: 400 },
+        );
+      }
+      updates.eiin = eiin.trim();
+    }
+
+    if (principal !== undefined) {
+      updates.principal = typeof principal === "string" ? principal.trim() : null;
+    }
+
+    if (principalPhone !== undefined) {
+      updates.principalPhone =
+        typeof principalPhone === "string" ? principalPhone.trim() : null;
+    }
+
+    if (representative !== undefined) {
+      updates.representative =
+        typeof representative === "string" ? representative.trim() : null;
+    }
+
+    if (representativePhone !== undefined) {
+      updates.representativePhone =
+        typeof representativePhone === "string"
+          ? representativePhone.trim()
+          : null;
+    }
+
+    if (division !== undefined) {
+      updates.division = typeof division === "string" ? division.trim() : null;
+    }
+
+    if (district !== undefined) {
+      updates.district = typeof district === "string" ? district.trim() : null;
+    }
+
+    if (upazila !== undefined) {
+      updates.upazila = typeof upazila === "string" ? upazila.trim() : null;
+    }
+
+    if (village !== undefined) {
+      updates.village = typeof village === "string" ? village.trim() : null;
+    }
+
+    if (block !== undefined) {
+      updates.block = typeof block === "string" ? block.trim() : null;
+    }
+
+    if (address !== undefined) {
+      updates.address = typeof address === "string" ? address.trim() : null;
+    }
+
+    if (Object.keys(updates).length === 0) {
       return NextResponse.json(
-        { message: "Provide a valid name or EIIN to update." },
+        { message: "No fields provided to update." },
         { status: 400 },
       );
     }
-
-    if (
-      (name !== undefined && (typeof name !== "string" || !name.trim())) ||
-      (eiin !== undefined && (typeof eiin !== "string" || !eiin.trim()))
-    ) {
-      return NextResponse.json(
-        { message: "Name and EIIN must be non-empty strings." },
-        { status: 400 },
-      );
-    }
-
-    const updates: { name?: string; eiin?: string } = {};
-
-    if (name !== undefined) updates.name = name.trim();
-    if (eiin !== undefined) updates.eiin = eiin.trim();
 
     const [updatedInstitution] = await db
       .update(institutions)
