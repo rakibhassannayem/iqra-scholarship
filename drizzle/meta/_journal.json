@@ -64,6 +64,13 @@
       "when": 1793082785235,
       "tag": "0008_magical_brother_voodoo",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793100000000,
+      "tag": "0009_drop_award_amount",
+      "breakpoints": true
     }
   ]
 }

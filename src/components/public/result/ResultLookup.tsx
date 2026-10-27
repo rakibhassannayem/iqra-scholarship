@@ -6,7 +6,6 @@ import { useLanguage } from "@/i18n/LanguageProvider";
 
 type ScholarshipResult = {
   status: "awarded" | "not-awarded" | "pending";
-  amount: number | null;
   category: string | null;
 };
 
@@ -36,7 +35,6 @@ const demoStudents: Student[] = [
     roll: "15",
     result: {
       status: "awarded",
-      amount: 12000,
       category: "Talent Pool",
     },
   },
@@ -48,7 +46,6 @@ const demoStudents: Student[] = [
     roll: "16",
     result: {
       status: "not-awarded",
-      amount: null,
       category: null,
     },
   },
@@ -60,7 +57,6 @@ const demoStudents: Student[] = [
     roll: "7",
     result: {
       status: "pending",
-      amount: null,
       category: null,
     },
   },
@@ -168,23 +164,14 @@ export default function ResultLookup() {
           </div>
 
           {result.status === "awarded" && (
-            <>
-              <div className="rounded-xl border p-4">
-                <p className="text-sm text-muted-foreground">
-                  {isBangla ? "বৃত্তির পরিমাণ" : "Scholarship Amount"}
-                </p>
-                <p className="mt-2 text-2xl font-bold text-primary">
-                  ৳{result.amount?.toLocaleString("en-BD")}
-                </p>
-              </div>
-
-              <div className="rounded-xl border p-4">
-                <p className="text-sm text-muted-foreground">
-                  {isBangla ? "বৃত্তির ক্যাটাগরি" : "Scholarship Category"}
-                </p>
-                <p className="mt-2 font-semibold">{result.category}</p>
-              </div>
-            </>
+            <div className="rounded-xl border p-4 sm:col-span-2">
+              <p className="text-sm text-muted-foreground">
+                {isBangla ? "বৃত্তির ক্যাটাগরি" : "Scholarship Category"}
+              </p>
+              <p className="mt-2 text-lg font-bold text-primary">
+                {result.category}
+              </p>
+            </div>
           )}
 
           {result.status === "not-awarded" && (

@@ -34,7 +34,6 @@ export async function GET() {
         scholarshipName: scholarships.name,
         categoryId: scholarshipCategories.id,
         categoryName: scholarshipCategories.name,
-        awardAmount: scholarshipGrants.awardAmount,
         grantStatus: scholarshipGrants.status,
         prizeStatus: scholarshipGrants.prizeStatus,
         prizeReceivedAt: scholarshipGrants.prizeReceivedAt,

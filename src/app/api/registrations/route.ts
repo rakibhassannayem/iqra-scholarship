@@ -16,6 +16,8 @@ export async function GET() {
         studentDbId: students.id,
         studentId: students.studentId,
         studentName: students.name,
+        studentClass: students.class,
+        studentRoll: students.roll,
         institutionName: institutions.name,
         scholarshipId: scholarships.id,
         scholarshipName: scholarships.name,

@@ -99,8 +99,6 @@ export const scholarshipGrants = pgTable(
         onDelete: "restrict",
       }),
 
-    awardAmount: integer("award_amount").notNull(),
-
     status: varchar("status", { length: 30 }).notNull().default("granted"),
 
     prizeStatus: varchar("prize_status", { length: 30 })

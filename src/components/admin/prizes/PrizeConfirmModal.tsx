@@ -126,13 +126,10 @@ export default function PrizeConfirmModal({
             <span>Class {item.class}, Roll {item.roll}</span>
           </div>
 
-          <div className="flex items-center justify-between border-t border-border/60 pt-2 text-muted-foreground">
+          <div className="border-t border-border/60 pt-2 text-muted-foreground">
             <span className="inline-flex items-center gap-1 font-medium text-foreground">
               <Award className="size-3.5 text-primary" />
               {item.categoryName} ({item.scholarshipName})
-            </span>
-            <span className="font-bold text-foreground">
-              ৳{item.awardAmount.toLocaleString()}
             </span>
           </div>
         </div>
@@ -216,7 +213,7 @@ export default function PrizeConfirmModal({
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. Received certificate, crest & cash cheque"
+              placeholder="e.g. Received certificate & crest"
               className="text-xs"
             />
           </div>

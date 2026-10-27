@@ -80,7 +80,7 @@ export default function InstitutionDetailsModal({
             <div className="rounded-xl border bg-card p-3.5 shadow-xs">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 <User className="size-3.5 text-primary" />
-                Principal / Head Teacher
+                Principal (মোহতামিম)
               </div>
               <p className="mt-2 font-medium text-foreground">
                 {institution.principal || (
@@ -104,7 +104,7 @@ export default function InstitutionDetailsModal({
             <div className="rounded-xl border bg-card p-3.5 shadow-xs">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 <Building className="size-3.5 text-primary" />
-                Representative
+                Representative (প্রতিনিধি)
               </div>
               <p className="mt-2 font-medium text-foreground">
                 {institution.representative || (

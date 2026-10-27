@@ -14,7 +14,6 @@ import {
   X,
   UserCheck,
   Award,
-  CircleDollarSign,
   Info,
 } from "lucide-react";
 
@@ -33,7 +32,6 @@ export type PrizeItem = {
   scholarshipName: string;
   categoryId: number;
   categoryName: string;
-  awardAmount: number;
   grantStatus: "granted" | "revoked";
   prizeStatus: "pending" | "received";
   prizeReceivedAt: string | null;
@@ -85,11 +83,8 @@ export default function PrizeTable({
     const received = prizes.filter((p) => p.prizeStatus === "received").length;
     const pending = total - received;
     const percentage = total > 0 ? Math.round((received / total) * 100) : 0;
-    const totalAwardAmount = prizes
-      .filter((p) => p.prizeStatus === "received")
-      .reduce((sum, p) => sum + p.awardAmount, 0);
 
-    return { total, received, pending, percentage, totalAwardAmount };
+    return { total, received, pending, percentage };
   }, [prizes]);
 
   // Filtered prizes
@@ -158,7 +153,7 @@ export default function PrizeTable({
   return (
     <div className="space-y-6">
       {/* Top Stats Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-xl border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted-foreground">
@@ -213,23 +208,6 @@ export default function PrizeTable({
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             Awaiting confirmation
-          </p>
-        </div>
-
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">
-              Distributed Amount
-            </span>
-            <div className="flex size-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600">
-              <CircleDollarSign className="size-4" />
-            </div>
-          </div>
-          <p className="mt-3 text-2xl font-bold">
-            ৳{stats.totalAwardAmount.toLocaleString()}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Total amount received by students
           </p>
         </div>
       </div>
@@ -345,7 +323,7 @@ export default function PrizeTable({
                 <tr>
                   <th className="px-4 py-3.5 font-semibold">Student & ID</th>
                   <th className="px-4 py-3.5 font-semibold">Institution</th>
-                  <th className="px-4 py-3.5 font-semibold">Scholarship & Award</th>
+                  <th className="px-4 py-3.5 font-semibold">Category</th>
                   <th className="px-4 py-3.5 font-semibold">Prize Status</th>
                   <th className="px-4 py-3.5 font-semibold">Confirmation Info</th>
                   <th className="px-4 py-3.5 text-right font-semibold">Actions</th>
@@ -414,16 +392,11 @@ export default function PrizeTable({
                         )}
                       </td>
 
-                      {/* Category & Amount */}
+                      {/* Category */}
                       <td className="px-4 py-3.5">
-                        <div>
-                          <Badge variant="outline" className="text-xs font-medium">
-                            {item.categoryName}
-                          </Badge>
-                        </div>
-                        <div className="mt-1 text-xs font-bold text-foreground">
-                          ৳{item.awardAmount.toLocaleString()}
-                        </div>
+                        <Badge variant="outline" className="text-xs font-medium">
+                          {item.categoryName}
+                        </Badge>
                       </td>
 
                       {/* Prize Status */}

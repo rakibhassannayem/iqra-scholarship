@@ -22,12 +22,18 @@ export async function GET() {
     const grants = await db
       .select({
         id: scholarshipGrants.id,
+        studentDbId: students.id,
         studentId: students.studentId,
         studentName: students.name,
+        studentClass: students.class,
+        studentRoll: students.roll,
         institutionName: institutions.name,
+        institutionEiin: institutions.eiin,
+        scholarshipId: scholarships.id,
         scholarshipName: scholarships.name,
+        academicYear: scholarships.academicYear,
+        categoryId: scholarshipCategories.id,
         categoryName: scholarshipCategories.name,
-        awardAmount: scholarshipGrants.awardAmount,
         status: scholarshipGrants.status,
         prizeStatus: scholarshipGrants.prizeStatus,
         prizeReceivedAt: scholarshipGrants.prizeReceivedAt,
@@ -73,7 +79,6 @@ export async function POST(request: NextRequest) {
     const studentId = Number(body.studentId);
     const scholarshipId = Number(body.scholarshipId);
     const categoryId = Number(body.categoryId);
-    const awardAmount = Number(body.awardAmount);
 
     if (
       !Number.isInteger(studentId) ||
@@ -81,14 +86,12 @@ export async function POST(request: NextRequest) {
       !Number.isInteger(scholarshipId) ||
       scholarshipId <= 0 ||
       !Number.isInteger(categoryId) ||
-      categoryId <= 0 ||
-      !Number.isInteger(awardAmount) ||
-      awardAmount <= 0
+      categoryId <= 0
     ) {
       return NextResponse.json(
         {
           message:
-            "Valid studentId, scholarshipId, categoryId and positive awardAmount are required.",
+            "Valid studentId, scholarshipId, and categoryId are required.",
         },
         { status: 400 },
       );
@@ -103,9 +106,9 @@ export async function POST(request: NextRequest) {
       .where(eq(scholarships.id, scholarshipId))
       .limit(1);
 
-    if (!scholarship || !scholarship.isActive) {
+    if (!scholarship) {
       return NextResponse.json(
-        { message: "Scholarship not found or inactive." },
+        { message: "Scholarship not found." },
         { status: 400 },
       );
     }
@@ -173,7 +176,6 @@ export async function POST(request: NextRequest) {
         studentId,
         scholarshipId,
         categoryId,
-        awardAmount,
         status: "granted",
       })
       .returning();
