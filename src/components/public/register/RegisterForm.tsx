@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { CheckCircle2, Copy, GraduationCap } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageProvider";
+import AdmitCard, { type AdmitCardData } from "./AdmitCard";
 
 type Institution = {
   id: number;
@@ -33,11 +34,11 @@ export default function RegisterForm() {
   const [classId, setClassId] = useState("");
   const [roll, setRoll] = useState("");
 
-  const [generatedId, setGeneratedId] = useState("");
-  const [copied, setCopied] = useState(false);
+  // After successful registration, store admit card data to show AdmitCard
+  const [admitCardData, setAdmitCardData] = useState<AdmitCardData | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     async function fetchInstitutions() {
@@ -54,7 +55,7 @@ export default function RegisterForm() {
         console.error("Failed to load institutions:", error);
         setErrorMessage(
           isBangla
-            ? "প্রতিষ্ঠানের তালিকা লোড করা যায়নি। পেজ রিফ্রেশ করুন।"
+            ? "প্রতিষ্ঠানের তালিকা লোড করা যায়নি। পেজ রিফ্রেশ করুন।"
             : "Could not load institutions. Please refresh the page.",
         );
       }
@@ -98,10 +99,8 @@ export default function RegisterForm() {
   function handleInstitutionInput(value: string) {
     setInstitutionName(value);
     setSelectedInstitution(null);
-    setGeneratedId("");
-    setCopied(false);
+    setAdmitCardData(null);
     setErrorMessage("");
-    setSuccessMessage("");
     setShowSuggestions(true);
   }
 
@@ -109,19 +108,15 @@ export default function RegisterForm() {
     setSelectedInstitution(institution);
     setInstitutionName(institution.name);
     setShowSuggestions(false);
-    setGeneratedId("");
-    setCopied(false);
+    setAdmitCardData(null);
     setErrorMessage("");
-    setSuccessMessage("");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setErrorMessage("");
-    setSuccessMessage("");
-    setGeneratedId("");
-    setCopied(false);
+    setAdmitCardData(null);
 
     if (!selectedInstitution) {
       setErrorMessage(
@@ -153,22 +148,30 @@ export default function RegisterForm() {
       if (!response.ok) {
         throw new Error(
           data.message ||
-            (isBangla ? "নিবন্ধন সম্পন্ন করা যায়নি।" : "Registration failed."),
+            (isBangla ? "নিবন্ধন সম্পন্ন করা যায়নি।" : "Registration failed."),
         );
       }
 
-      setGeneratedId(data.studentId);
-      setSuccessMessage(
-        isBangla
-          ? "শিক্ষার্থীর নিবন্ধন সফলভাবে সম্পন্ন হয়েছে।"
-          : "Student registered successfully.",
-      );
+      // Build admit card data from the API response
+      setAdmitCardData({
+        studentName: data.student?.name || studentName.trim(),
+        studentId: data.studentId,
+        studentRoll: data.student?.roll || Number(roll),
+        studentClass: data.student?.class || Number(classId),
+        institutionName: data.institutionName || selectedInstitution.name,
+        institutionEiin: data.institutionEiin || selectedInstitution.eiin,
+        scholarshipName: data.scholarshipName,
+        academicYear: data.academicYear,
+        examCenter: data.examCenter ?? undefined,
+        examDate: data.examDate ?? undefined,
+        examTime: data.examTime ?? undefined,
+      });
     } catch (error) {
       setErrorMessage(
         error instanceof Error
           ? error.message
           : isBangla
-            ? "একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।"
+            ? "একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।"
             : "Something went wrong. Please try again.",
       );
     } finally {
@@ -176,15 +179,14 @@ export default function RegisterForm() {
     }
   }
 
-  async function handleCopyId() {
-    try {
-      await navigator.clipboard.writeText(generatedId);
-      setCopied(true);
-    } catch {
-      setErrorMessage(
-        isBangla ? "Student ID কপি করা যায়নি।" : "Could not copy Student ID.",
-      );
-    }
+  function handleReset() {
+    setAdmitCardData(null);
+    setInstitutionName("");
+    setSelectedInstitution(null);
+    setStudentName("");
+    setClassId("");
+    setRoll("");
+    setErrorMessage("");
   }
 
   if (checkingScholarship) {
@@ -208,10 +210,10 @@ export default function RegisterForm() {
           <h2 className="text-xl font-bold sm:text-2xl">
             {scholarshipCheckFailed
               ? isBangla
-                ? "বৃত্তির তথ্য লোড করা যায়নি"
+                ? "বৃত্তির তথ্য লোড করা যায়নি"
                 : "Unable to Check Scholarship"
               : isBangla
-                ? "কোনো সক্রিয় বৃত্তি নেই"
+                ? "কোনো সক্রিয় বৃত্তি নেই"
                 : "No Active Scholarship Available"}
           </h2>
 
@@ -228,6 +230,18 @@ export default function RegisterForm() {
       </section>
     );
   }
+
+  // ✅ After successful registration — show the Admit Card
+  if (admitCardData) {
+    return (
+      <section className="bg-background px-4 py-12 sm:py-16">
+        <div className="mx-auto max-w-4xl">
+          <AdmitCard data={admitCardData} onReset={handleReset} />
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="bg-background px-4 py-16 sm:py-20">
       <div className="mx-auto max-w-3xl">
@@ -246,7 +260,7 @@ export default function RegisterForm() {
 
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {isBangla
-                  ? "সঠিক তথ্য দিয়ে ফর্মটি পূরণ করুন।"
+                  ? "সঠিক তথ্য দিয়ে ফর্মটি পূরণ করুন।"
                   : "Fill in the form with accurate information."}
               </p>
             </div>
@@ -302,7 +316,7 @@ export default function RegisterForm() {
                     ) : (
                       <li className="px-3 py-3 text-sm text-muted-foreground">
                         {isBangla
-                          ? "কোনো প্রতিষ্ঠান পাওয়া যায়নি।"
+                          ? "কোনো প্রতিষ্ঠান পাওয়া যায়নি।"
                           : "No institutions found."}
                       </li>
                     )}
@@ -326,7 +340,7 @@ export default function RegisterForm() {
                 id="reg-eiin"
                 readOnly
                 value={selectedInstitution?.eiin ?? ""}
-                placeholder={isBangla ? "স্বয়ংক্রিয়ভাবে দেখাবে" : "Auto-filled"}
+                placeholder={isBangla ? "স্বয়ংক্রিয়ভাবে দেখাবে" : "Auto-filled"}
                 className="h-11 w-full rounded-lg border border-input bg-muted px-3 text-sm outline-none"
               />
             </div>
@@ -344,9 +358,8 @@ export default function RegisterForm() {
                 value={studentName}
                 onChange={(event) => {
                   setStudentName(event.target.value);
-                  setGeneratedId("");
+                  setAdmitCardData(null);
                   setErrorMessage("");
-                  setSuccessMessage("");
                 }}
                 placeholder={
                   isBangla ? "শিক্ষার্থীর নাম লিখুন" : "Enter student name"
@@ -367,9 +380,8 @@ export default function RegisterForm() {
                   value={classId}
                   onChange={(event) => {
                     setClassId(event.target.value);
-                    setGeneratedId("");
+                    setAdmitCardData(null);
                     setErrorMessage("");
-                    setSuccessMessage("");
                   }}
                   className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
@@ -402,9 +414,8 @@ export default function RegisterForm() {
                   value={roll}
                   onChange={(event) => {
                     setRoll(event.target.value.replace(/\D/g, "").slice(0, 10));
-                    setGeneratedId("");
+                    setAdmitCardData(null);
                     setErrorMessage("");
-                    setSuccessMessage("");
                   }}
                   placeholder={
                     isBangla ? "রোল নম্বর লিখুন" : "Enter roll number"
@@ -437,45 +448,6 @@ export default function RegisterForm() {
                   : "Register"}
             </button>
           </form>
-
-          {generatedId && (
-            <div
-              role="status"
-              className="mt-7 rounded-xl border border-accent/50 bg-accent/10 p-5 sm:p-6"
-            >
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="size-5 text-primary" />
-
-                <h3 className="font-bold">
-                  {successMessage ||
-                    (isBangla ? "নিবন্ধন সম্পন্ন" : "Registration completed")}
-                </h3>
-              </div>
-
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                {isBangla ? "আপনার Student ID:" : "Your Student ID:"}
-              </p>
-
-              <p className="mt-2 break-all rounded-lg border bg-background px-4 py-3 text-center font-mono text-xl font-bold tracking-wide sm:text-2xl">
-                {generatedId}
-              </p>
-
-              <button
-                type="button"
-                onClick={handleCopyId}
-                className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border bg-background px-4 text-sm font-medium hover:bg-muted"
-              >
-                <Copy className="size-4" />
-                {copied
-                  ? isBangla
-                    ? "কপি হয়েছে"
-                    : "Copied"
-                  : isBangla
-                    ? "Student ID কপি করুন"
-                    : "Copy Student ID"}
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </section>

@@ -80,6 +80,7 @@ export async function POST(request: Request) {
     }
 
     let targetScholarshipId: number;
+    let targetScholarship: typeof scholarships.$inferSelect | undefined;
 
     if (Number.isInteger(customScholarshipId) && customScholarshipId > 0) {
       const [chosenScholarship] = await db
@@ -95,6 +96,7 @@ export async function POST(request: Request) {
         );
       }
       targetScholarshipId = chosenScholarship.id;
+      targetScholarship = chosenScholarship;
     } else {
       const [activeScholarship] = await db
         .select()
@@ -112,6 +114,7 @@ export async function POST(request: Request) {
         );
       }
       targetScholarshipId = activeScholarship.id;
+      targetScholarship = activeScholarship;
     }
 
     const year = String(new Date().getFullYear()).slice(-2);
@@ -147,6 +150,13 @@ export async function POST(request: Request) {
         studentId: result.student.studentId,
         student: result.student,
         scholarshipRegistration: result.registration,
+        institutionName: institution.name,
+        institutionEiin: institution.eiin,
+        scholarshipName: targetScholarship?.name,
+        academicYear: targetScholarship?.academicYear,
+        examCenter: targetScholarship?.examCenter ?? null,
+        examDate: targetScholarship?.examDate ?? null,
+        examTime: targetScholarship?.examTime ?? null,
       },
       { status: 201 },
     );

@@ -41,6 +41,7 @@ export default function ScholarshipsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Scholarship | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [togglingId, setTogglingId] = useState<number | null>(null);
 
   const fetchScholarships = useCallback(async () => {
     setLoading(true);
@@ -82,14 +83,64 @@ export default function ScholarshipsPage() {
       name: scholarship.name,
       description: scholarship.description,
       academicYear: scholarship.academicYear,
-      startDate: toDateInput(scholarship.startDate),
       endDate: toDateInput(scholarship.endDate),
-      amount: String(scholarship.amount),
       eligibility: scholarship.eligibility,
+      examCenter: scholarship.examCenter ?? "",
+      examDate: scholarship.examDate ?? "",
+      examTime: scholarship.examTime ?? "",
     });
     setError("");
     setSuccess("");
     setFormOpen(true);
+  }
+
+  async function handleToggleActive(scholarship: Scholarship, nextActive: boolean) {
+    setTogglingId(scholarship.id);
+    setError("");
+    setSuccess("");
+
+    // Optimistically update: only ONE scholarship can be active at a time
+    const previousScholarships = scholarships;
+    setScholarships((prev) =>
+      prev.map((s) => {
+        if (nextActive) {
+          // If turning this one ON, set this one to true and all others to false
+          return { ...s, isActive: s.id === scholarship.id };
+        } else {
+          // If turning this one OFF, only deactivate this one
+          return s.id === scholarship.id ? { ...s, isActive: false } : s;
+        }
+      }),
+    );
+
+    try {
+      const response = await fetch(`/api/scholarships/${scholarship.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: nextActive }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update scholarship status.");
+      }
+
+      setSuccess(
+        nextActive
+          ? `"${scholarship.name}" is now active. All other scholarships are inactive.`
+          : `"${scholarship.name}" is now inactive.`,
+      );
+
+      await fetchScholarships();
+    } catch (err) {
+      setScholarships(previousScholarships);
+      setError(
+        err instanceof Error ? err.message : "Failed to update scholarship status.",
+      );
+    } finally {
+      setTogglingId(null);
+    }
   }
 
   async function handleSubmit(values: ScholarshipFormValues) {
@@ -107,10 +158,7 @@ export default function ScholarshipsPage() {
         {
           method: editing ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...values,
-            amount: Number(values.amount),
-          }),
+          body: JSON.stringify(values),
         },
       );
 
@@ -174,7 +222,7 @@ export default function ScholarshipsPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Scholarships</h2>
           <p className="text-sm text-muted-foreground">
-            Create and manage scholarship programs.
+            Create and manage scholarship programs. Only one scholarship can be active at a time.
           </p>
         </div>
 
@@ -204,6 +252,8 @@ export default function ScholarshipsPage() {
           setDeleteError("");
           setDeleteTarget(scholarship);
         }}
+        onToggleActive={handleToggleActive}
+        togglingId={togglingId}
       />
 
       <ScholarshipForm

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { desc, eq } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { scholarships } from "@/lib/db/schema";
 
@@ -31,10 +31,11 @@ export async function POST(request: NextRequest) {
       name,
       description,
       academicYear,
-      startDate,
       endDate,
-      amount,
       eligibility,
+      examCenter,
+      examDate,
+      examTime,
     } = body;
 
     if (
@@ -44,11 +45,7 @@ export async function POST(request: NextRequest) {
       !description.trim() ||
       typeof academicYear !== "string" ||
       !academicYear.trim() ||
-      !startDate ||
       !endDate ||
-      amount === undefined ||
-      !Number.isInteger(Number(amount)) ||
-      Number(amount) <= 0 ||
       typeof eligibility !== "string" ||
       !eligibility.trim()
     ) {
@@ -61,16 +58,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const parsedStartDate = new Date(startDate);
     const parsedEndDate = new Date(endDate);
 
-    if (
-      Number.isNaN(parsedStartDate.getTime()) ||
-      Number.isNaN(parsedEndDate.getTime()) ||
-      parsedEndDate <= parsedStartDate
-    ) {
+    if (Number.isNaN(parsedEndDate.getTime())) {
       return NextResponse.json(
-        { message: "End date must be later than start date" },
+        { message: "Please provide a valid registration end date" },
         { status: 400 },
       );
     }
@@ -81,11 +73,12 @@ export async function POST(request: NextRequest) {
         name: name.trim(),
         description: description.trim(),
         academicYear: academicYear.trim(),
-        startDate: parsedStartDate,
         endDate: parsedEndDate,
-        amount: Number(amount),
         eligibility: eligibility.trim(),
         isActive: false,
+        examCenter: typeof examCenter === "string" && examCenter.trim() ? examCenter.trim() : null,
+        examDate: typeof examDate === "string" && examDate.trim() ? examDate.trim() : null,
+        examTime: typeof examTime === "string" && examTime.trim() ? examTime.trim() : null,
       })
       .returning();
 

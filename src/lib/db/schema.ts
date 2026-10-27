@@ -50,11 +50,15 @@ export const scholarships = pgTable("scholarships", {
   name: varchar("name", { length: 255 }).notNull(),
   description: varchar("description", { length: 2000 }).notNull(),
   academicYear: varchar("academic_year", { length: 20 }).notNull(),
-  startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
-  amount: integer("amount").notNull(),
   eligibility: varchar("eligibility", { length: 2000 }).notNull(),
   isActive: boolean("is_active").notNull().default(false),
+
+  // Exam info for admit card
+  examCenter: varchar("exam_center", { length: 500 }),
+  examDate: varchar("exam_date", { length: 100 }),
+  examTime: varchar("exam_time", { length: 100 }),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

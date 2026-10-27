@@ -16,10 +16,11 @@ export type ScholarshipFormValues = {
   name: string;
   description: string;
   academicYear: string;
-  startDate: string;
   endDate: string;
-  amount: string;
   eligibility: string;
+  examCenter: string;
+  examDate: string;
+  examTime: string;
 };
 
 type ScholarshipFormProps = {
@@ -36,10 +37,11 @@ export const emptyScholarshipForm: ScholarshipFormValues = {
   name: "",
   description: "",
   academicYear: "",
-  startDate: "",
   endDate: "",
-  amount: "",
   eligibility: "",
+  examCenter: "",
+  examDate: "",
+  examTime: "",
 };
 
 export default function ScholarshipForm({
@@ -60,10 +62,11 @@ export default function ScholarshipForm({
       name: String(formData.get("name") ?? ""),
       description: String(formData.get("description") ?? ""),
       academicYear: String(formData.get("academicYear") ?? ""),
-      startDate: String(formData.get("startDate") ?? ""),
       endDate: String(formData.get("endDate") ?? ""),
-      amount: String(formData.get("amount") ?? ""),
       eligibility: String(formData.get("eligibility") ?? ""),
+      examCenter: String(formData.get("examCenter") ?? ""),
+      examDate: String(formData.get("examDate") ?? ""),
+      examTime: String(formData.get("examTime") ?? ""),
     });
   }
 
@@ -103,40 +106,14 @@ export default function ScholarshipForm({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="startDate">Start Date</Label>
-              <Input
-                id="startDate"
-                name="startDate"
-                type="date"
-                required
-                defaultValue={initialValues.startDate}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="endDate">End Date</Label>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="endDate">Registration Deadline / Last Date</Label>
               <Input
                 id="endDate"
                 name="endDate"
                 type="date"
                 required
-                min={initialValues.startDate || undefined}
                 defaultValue={initialValues.endDate}
-              />
-            </div>
-
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="amount">Scholarship Amount (৳)</Label>
-              <Input
-                id="amount"
-                name="amount"
-                type="number"
-                min="1"
-                step="1"
-                required
-                defaultValue={initialValues.amount}
-                placeholder="5000"
               />
             </div>
 
@@ -153,15 +130,63 @@ export default function ScholarshipForm({
             </div>
 
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="eligibility">Eligibility Criteria</Label>
+              <Label htmlFor="eligibility">Eligibility</Label>
               <Textarea
                 id="eligibility"
                 name="eligibility"
                 required
                 maxLength={2000}
                 defaultValue={initialValues.eligibility}
-                placeholder="আবেদনের যোগ্যতা"
+                placeholder="কারা আবেদন করতে পারবে (যোগ্যতা)"
               />
+            </div>
+          </div>
+
+          {/* Exam info section for Admit Card */}
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="size-2 rounded-full bg-primary" />
+              <h4 className="font-semibold text-sm">
+                Admit Card-এর জন্য পরীক্ষার তথ্য (ঐচ্ছিক)
+              </h4>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              এই ফিল্ডগুলো পূরণ করলে রেজিস্ট্রেশন শেষে শিক্ষার্থীর প্রবেশপত্রে (Admit Card) পরীক্ষার কেন্দ্র, তারিখ ও সময় সরাসরি প্রদর্শিত হবে।
+            </p>
+
+            <div className="space-y-2">
+              <Label htmlFor="examCenter">Exam Center (পরীক্ষা কেন্দ্র)</Label>
+              <Input
+                id="examCenter"
+                name="examCenter"
+                maxLength={500}
+                defaultValue={initialValues.examCenter}
+                placeholder="যেমন: ইকরা একাডেমি অডিটোরিয়াম, ঢাকা"
+              />
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="examDate">Exam Date (পরীক্ষার তারিখ)</Label>
+                <Input
+                  id="examDate"
+                  name="examDate"
+                  maxLength={100}
+                  defaultValue={initialValues.examDate}
+                  placeholder="যেমন: ২৫ এপ্রিল, ২০২৬"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="examTime">Exam Time (পরীক্ষার সময়)</Label>
+                <Input
+                  id="examTime"
+                  name="examTime"
+                  maxLength={100}
+                  defaultValue={initialValues.examTime}
+                  placeholder="যেমন: সকাল ১০:০০ টা - দুপুর ১২:০০ টা"
+                />
+              </div>
             </div>
           </div>
 
@@ -171,21 +196,18 @@ export default function ScholarshipForm({
             </p>
           )}
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
+              disabled={saving}
               onClick={() => onOpenChange(false)}
             >
               Cancel
             </Button>
 
             <Button type="submit" disabled={saving}>
-              {saving
-                ? "Saving..."
-                : editing
-                  ? "Update Scholarship"
-                  : "Create Scholarship"}
+              {saving ? "Saving..." : editing ? "Update" : "Create"}
             </Button>
           </div>
         </form>

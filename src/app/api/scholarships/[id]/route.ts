@@ -114,19 +114,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       updates.academicYear = body.academicYear.trim();
     }
 
-    if (body.startDate !== undefined) {
-      const date = new Date(body.startDate);
-
-      if (Number.isNaN(date.getTime())) {
-        return NextResponse.json(
-          { message: "Invalid start date" },
-          { status: 400 },
-        );
-      }
-
-      updates.startDate = date;
-    }
-
     if (body.endDate !== undefined) {
       const date = new Date(body.endDate);
 
@@ -138,27 +125,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       }
 
       updates.endDate = date;
-    }
-
-    const finalStartDate = updates.startDate ?? existingScholarship.startDate;
-    const finalEndDate = updates.endDate ?? existingScholarship.endDate;
-
-    if (finalEndDate <= finalStartDate) {
-      return NextResponse.json(
-        { message: "End date must be later than start date" },
-        { status: 400 },
-      );
-    }
-
-    if (body.amount !== undefined) {
-      if (!Number.isInteger(Number(body.amount)) || Number(body.amount) <= 0) {
-        return NextResponse.json(
-          { message: "Amount must be a positive integer" },
-          { status: 400 },
-        );
-      }
-
-      updates.amount = Number(body.amount);
     }
 
     if (body.eligibility !== undefined) {
@@ -181,6 +147,28 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       }
 
       updates.isActive = body.isActive;
+    }
+
+    // Exam info fields (optional, nullable)
+    if (body.examCenter !== undefined) {
+      updates.examCenter =
+        typeof body.examCenter === "string" && body.examCenter.trim()
+          ? body.examCenter.trim()
+          : null;
+    }
+
+    if (body.examDate !== undefined) {
+      updates.examDate =
+        typeof body.examDate === "string" && body.examDate.trim()
+          ? body.examDate.trim()
+          : null;
+    }
+
+    if (body.examTime !== undefined) {
+      updates.examTime =
+        typeof body.examTime === "string" && body.examTime.trim()
+          ? body.examTime.trim()
+          : null;
     }
 
     if (Object.keys(updates).length === 0) {
