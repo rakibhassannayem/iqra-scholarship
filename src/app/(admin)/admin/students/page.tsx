@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { UserPlus, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +19,7 @@ import StudentForm, {
 import StudentTable, {
   type Student,
 } from "@/components/admin/students/StudentTable";
+import StudentDetailsModal from "@/components/admin/students/StudentDetailsModal";
 
 type Institution = {
   id: number;
@@ -25,7 +27,7 @@ type Institution = {
   eiin: string;
 };
 
-export default function StudentsPage() {
+export default function StudentRegistrationsPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +35,7 @@ export default function StudentsPage() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
 
   const [error, setError] = useState("");
@@ -50,7 +53,7 @@ export default function StudentsPage() {
       ]);
 
       if (!studentsResponse.ok || !institutionsResponse.ok) {
-        throw new Error("Failed to load students or institutions.");
+        throw new Error("Failed to load student registrations or institutions.");
       }
 
       const [studentsData, institutionsData] = await Promise.all([
@@ -61,7 +64,9 @@ export default function StudentsPage() {
       setStudents(studentsData);
       setInstitutions(institutionsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load data.");
+      setError(
+        err instanceof Error ? err.message : "Failed to load data.",
+      );
     } finally {
       setLoading(false);
     }
@@ -105,20 +110,22 @@ export default function StudentsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to save student.");
+        throw new Error(data.message || "Failed to save student registration.");
       }
 
       setFormOpen(false);
       setEditingStudent(null);
       setSuccess(
         editingStudent
-          ? "Student updated successfully."
-          : "Student registered successfully.",
+          ? "Student registration updated successfully."
+          : `Student registered successfully with ID: ${data.studentId || data.student?.studentId || "Generated"}`,
       );
 
       await fetchData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save student.");
+      setError(
+        err instanceof Error ? err.message : "Failed to save student registration.",
+      );
     } finally {
       setSaving(false);
     }
@@ -137,52 +144,77 @@ export default function StudentsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to delete student.");
+        throw new Error(data.message || "Failed to delete student registration.");
       }
 
       setDeleteTarget(null);
-      setSuccess("Student deleted successfully.");
+      setSuccess("Student registration deleted successfully.");
       await fetchData();
     } catch (err) {
       setDeleteError(
-        err instanceof Error ? err.message : "Failed to delete student.",
+        err instanceof Error
+          ? err.message
+          : "Failed to delete student registration.",
       );
     }
   }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Students</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Student Registrations</h1>
           <p className="text-sm text-muted-foreground">
-            Manage student registrations and information.
+            Manage student registrations, academic records, and scholarship allocations.
           </p>
         </div>
 
-        <Button onClick={openCreateForm}>Add Student</Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchData}
+            disabled={loading}
+            className="gap-1.5"
+          >
+            <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+
+          <Button onClick={openCreateForm} className="gap-1.5">
+            <UserPlus className="size-4" />
+            Register Student
+          </Button>
+        </div>
       </div>
 
+      {/* Notifications */}
       {error && !formOpen && !deleteTarget && (
-        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-          {error}
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          <AlertCircle className="size-4 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
       {success && (
-        <div className="rounded-md border border-green-600/30 bg-green-600/5 p-3 text-sm">
-          {success}
+        <div className="flex items-center gap-2 rounded-lg border border-green-600/30 bg-green-600/10 p-4 text-sm text-green-700 dark:text-green-400">
+          <CheckCircle2 className="size-4 shrink-0" />
+          <span>{success}</span>
         </div>
       )}
 
-      {loading ? (
-        <div className="rounded-lg border p-8 text-center text-muted-foreground">
-          Loading students...
+      {/* Table or Loading */}
+      {loading && students.length === 0 ? (
+        <div className="rounded-xl border bg-card p-12 text-center text-muted-foreground">
+          <div className="inline-flex size-10 animate-spin items-center justify-center rounded-full border-4 border-primary border-t-transparent mb-3" />
+          <p className="text-sm">Loading student registrations...</p>
         </div>
       ) : (
         <StudentTable
           students={students}
           institutions={institutions}
+          onView={(student) => setViewingStudent(student)}
           onEdit={openEditForm}
           onDelete={(student) => {
             setDeleteError("");
@@ -191,11 +223,24 @@ export default function StudentsPage() {
         />
       )}
 
+      {/* View Details Modal */}
+      <StudentDetailsModal
+        student={viewingStudent}
+        open={Boolean(viewingStudent)}
+        onOpenChange={(open) => {
+          if (!open) setViewingStudent(null);
+        }}
+        onEdit={(student) => {
+          setViewingStudent(null);
+          openEditForm(student);
+        }}
+      />
+
+      {/* Register/Edit Modal */}
       <StudentForm
         open={formOpen}
         onOpenChange={(open) => {
           setFormOpen(open);
-
           if (!open) {
             setError("");
             setEditingStudent(null);
@@ -206,6 +251,7 @@ export default function StudentsPage() {
             ? {
                 name: editingStudent.name,
                 institutionId: editingStudent.institutionId,
+                scholarshipId: editingStudent.scholarshipId,
                 class: editingStudent.class,
                 roll: editingStudent.roll,
               }
@@ -217,6 +263,7 @@ export default function StudentsPage() {
         onSubmit={handleSubmit}
       />
 
+      {/* Delete Confirmation Alert */}
       <AlertDialog
         open={Boolean(deleteTarget)}
         onOpenChange={(open) => {
@@ -228,16 +275,17 @@ export default function StudentsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Student?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Student Registration?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete{" "}
-              <strong>{deleteTarget?.name}</strong>? This action cannot be
-              undone.
+              Are you sure you want to delete registration for{" "}
+              <strong>{deleteTarget?.name}</strong> (Student ID:{" "}
+              <span className="font-mono">{deleteTarget?.studentId}</span>)?
+              This will remove the student record and cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           {deleteError && (
-            <p className="text-sm text-destructive">{deleteError}</p>
+            <p className="text-sm font-medium text-destructive">{deleteError}</p>
           )}
 
           <AlertDialogFooter>
@@ -250,7 +298,7 @@ export default function StudentsPage() {
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              Delete Registration
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,0 +1,2 @@
+ALTER TABLE "students" ADD COLUMN "scholarship_id" integer;--> statement-breakpoint
+ALTER TABLE "students" ADD CONSTRAINT "students_scholarship_id_scholarships_id_fk" FOREIGN KEY ("scholarship_id") REFERENCES "public"."scholarships"("id") ON DELETE no action ON UPDATE no action;

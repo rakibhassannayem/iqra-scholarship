@@ -57,6 +57,13 @@
       "when": 1793011818653,
       "tag": "0007_living_clint_barton",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793082785235,
+      "tag": "0008_magical_brother_voodoo",
+      "breakpoints": true
     }
   ]
 }

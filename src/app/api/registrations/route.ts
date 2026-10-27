@@ -12,23 +12,22 @@ export async function GET() {
   try {
     const registrations = await db
       .select({
-        id: scholarshipRegistrations.id,
+        id: students.id,
         studentDbId: students.id,
         studentId: students.studentId,
         studentName: students.name,
         institutionName: institutions.name,
         scholarshipId: scholarships.id,
         scholarshipName: scholarships.name,
-        registeredAt: scholarshipRegistrations.registeredAt,
+        registeredAt: students.createdAt,
       })
-      .from(scholarshipRegistrations)
-      .innerJoin(students, eq(scholarshipRegistrations.studentId, students.id))
+      .from(students)
       .innerJoin(institutions, eq(students.institutionId, institutions.id))
       .innerJoin(
         scholarships,
-        eq(scholarshipRegistrations.scholarshipId, scholarships.id),
+        eq(students.scholarshipId, scholarships.id),
       )
-      .orderBy(desc(scholarshipRegistrations.registeredAt));
+      .orderBy(desc(students.createdAt));
 
     return NextResponse.json(registrations);
   } catch (error) {

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { institutions, students } from "@/lib/db/schema";
+import {
+  institutions,
+  students,
+  scholarships,
+  scholarshipRegistrations,
+} from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 type RouteContext = {
@@ -21,8 +26,22 @@ export async function GET(_request: Request, { params }: RouteContext) {
     }
 
     const [student] = await db
-      .select()
+      .select({
+        id: students.id,
+        studentId: students.studentId,
+        name: students.name,
+        class: students.class,
+        roll: students.roll,
+        institutionId: students.institutionId,
+        institutionName: institutions.name,
+        institutionEiin: institutions.eiin,
+        scholarshipId: students.scholarshipId,
+        scholarshipName: scholarships.name,
+        createdAt: students.createdAt,
+      })
       .from(students)
+      .innerJoin(institutions, eq(students.institutionId, institutions.id))
+      .leftJoin(scholarships, eq(students.scholarshipId, scholarships.id))
       .where(eq(students.id, studentId))
       .limit(1);
 
@@ -58,7 +77,13 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     }
 
     const body = await request.json();
-    const { name, institutionId, class: studentClass, roll } = body;
+    const {
+      name,
+      institutionId,
+      class: studentClass,
+      roll,
+      scholarshipId: customScholarshipId,
+    } = body;
 
     if (
       typeof name !== "string" ||
@@ -104,19 +129,32 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       );
     }
 
-    // Keep the original admission year in the Student ID.
+    // Keep the original registration year in the Student ID
     const year = existingStudent.studentId.slice(0, 2);
     const newStudentId = `${year}${institution.eiin}${studentClass}${roll}`;
 
+    const updateData: {
+      name: string;
+      institutionId: number;
+      class: number;
+      roll: number;
+      studentId: string;
+      scholarshipId?: number;
+    } = {
+      name: name.trim(),
+      institutionId,
+      class: studentClass,
+      roll,
+      studentId: newStudentId,
+    };
+
+    if (Number.isInteger(customScholarshipId) && customScholarshipId > 0) {
+      updateData.scholarshipId = customScholarshipId;
+    }
+
     const [updatedStudent] = await db
       .update(students)
-      .set({
-        name: name.trim(),
-        institutionId,
-        class: studentClass,
-        roll,
-        studentId: newStudentId,
-      })
+      .set(updateData)
       .where(eq(students.id, studentId))
       .returning();
 
@@ -133,7 +171,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
   }
 }
 
-// DELETE: Delete a student
+// DELETE: Delete a student and associated registrations
 export async function DELETE(_request: Request, { params }: RouteContext) {
   try {
     const { id } = await params;
@@ -146,12 +184,20 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
       );
     }
 
-    const [deletedStudent] = await db
-      .delete(students)
-      .where(eq(students.id, studentId))
-      .returning();
+    const result = await db.transaction(async (tx) => {
+      await tx
+        .delete(scholarshipRegistrations)
+        .where(eq(scholarshipRegistrations.studentId, studentId));
 
-    if (!deletedStudent) {
+      const [deletedStudent] = await tx
+        .delete(students)
+        .where(eq(students.id, studentId))
+        .returning();
+
+      return deletedStudent;
+    });
+
+    if (!result) {
       return NextResponse.json(
         { message: "Student not found." },
         { status: 404 },
@@ -159,14 +205,14 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
     }
 
     return NextResponse.json({
-      message: "Student deleted successfully.",
-      student: deletedStudent,
+      message: "Student registration deleted successfully.",
+      student: result,
     });
   } catch (error) {
     console.error("Failed to delete student:", error);
 
     return NextResponse.json(
-      { message: "Failed to delete student." },
+      { message: "Failed to delete student. It may be linked to an awarded grant." },
       { status: 500 },
     );
   }

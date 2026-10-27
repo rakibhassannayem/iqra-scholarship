@@ -15,7 +15,6 @@ export async function GET() {
       institutionCount,
       scholarshipCount,
       activeScholarshipCount,
-      registrationCount,
     ] = await Promise.all([
       db.select({ total: count() }).from(students),
       db.select({ total: count() }).from(institutions),
@@ -24,7 +23,6 @@ export async function GET() {
         .select({ total: count() })
         .from(scholarships)
         .where(eq(scholarships.isActive, true)),
-      db.select({ total: count() }).from(scholarshipRegistrations),
     ]);
 
     return NextResponse.json({
@@ -32,7 +30,7 @@ export async function GET() {
       totalInstitutions: institutionCount[0].total,
       totalScholarships: scholarshipCount[0].total,
       activeScholarships: activeScholarshipCount[0].total,
-      totalRegistrations: registrationCount[0].total,
+      totalRegistrations: studentCount[0].total,
     });
   } catch (error) {
     console.error("Dashboard statistics error:", error);

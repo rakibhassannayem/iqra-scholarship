@@ -41,13 +41,8 @@ const navigation = [
     icon: School,
   },
   {
-    title: "Students",
+    title: "Student Registrations",
     href: "/admin/students",
-    icon: UserGroup,
-  },
-  {
-    title: "Registrations",
-    href: "/admin/registrations",
     icon: ClipboardPenLine,
   },
   {

@@ -122,18 +122,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [registration] = await db
-      .select({ id: scholarshipRegistrations.id })
-      .from(scholarshipRegistrations)
+    const [registeredStudent] = await db
+      .select({ id: students.id })
+      .from(students)
       .where(
         and(
-          eq(scholarshipRegistrations.studentId, studentId),
-          eq(scholarshipRegistrations.scholarshipId, scholarshipId),
+          eq(students.id, studentId),
+          eq(students.scholarshipId, scholarshipId),
         ),
       )
       .limit(1);
 
-    if (!registration) {
+    if (!registeredStudent) {
       return NextResponse.json(
         {
           message:

@@ -6,11 +6,28 @@ import {
   scholarships,
   scholarshipRegistrations,
 } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 export async function GET() {
   try {
-    const allStudents = await db.select().from(students);
+    const allStudents = await db
+      .select({
+        id: students.id,
+        studentId: students.studentId,
+        name: students.name,
+        class: students.class,
+        roll: students.roll,
+        institutionId: students.institutionId,
+        institutionName: institutions.name,
+        institutionEiin: institutions.eiin,
+        scholarshipId: students.scholarshipId,
+        scholarshipName: scholarships.name,
+        createdAt: students.createdAt,
+      })
+      .from(students)
+      .innerJoin(institutions, eq(students.institutionId, institutions.id))
+      .leftJoin(scholarships, eq(students.scholarshipId, scholarships.id))
+      .orderBy(desc(students.createdAt));
 
     return NextResponse.json(allStudents);
   } catch (error) {
@@ -26,7 +43,13 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, institutionId, class: studentClass, roll } = body;
+    const {
+      name,
+      institutionId,
+      class: studentClass,
+      roll,
+      scholarshipId: customScholarshipId,
+    } = body;
 
     if (
       typeof name !== "string" ||
@@ -56,20 +79,39 @@ export async function POST(request: Request) {
       );
     }
 
-    const [activeScholarship] = await db
-      .select()
-      .from(scholarships)
-      .where(eq(scholarships.isActive, true))
-      .limit(1);
+    let targetScholarshipId: number;
 
-    if (!activeScholarship) {
-      return NextResponse.json(
-        {
-          message:
-            "Student registration is currently closed because no scholarship is active.",
-        },
-        { status: 409 },
-      );
+    if (Number.isInteger(customScholarshipId) && customScholarshipId > 0) {
+      const [chosenScholarship] = await db
+        .select()
+        .from(scholarships)
+        .where(eq(scholarships.id, customScholarshipId))
+        .limit(1);
+
+      if (!chosenScholarship) {
+        return NextResponse.json(
+          { message: "Selected scholarship was not found." },
+          { status: 404 },
+        );
+      }
+      targetScholarshipId = chosenScholarship.id;
+    } else {
+      const [activeScholarship] = await db
+        .select()
+        .from(scholarships)
+        .where(eq(scholarships.isActive, true))
+        .limit(1);
+
+      if (!activeScholarship) {
+        return NextResponse.json(
+          {
+            message:
+              "Student registration is currently closed because no scholarship is active.",
+          },
+          { status: 409 },
+        );
+      }
+      targetScholarshipId = activeScholarship.id;
     }
 
     const year = String(new Date().getFullYear()).slice(-2);
@@ -81,6 +123,7 @@ export async function POST(request: Request) {
         .values({
           studentId,
           institutionId,
+          scholarshipId: targetScholarshipId,
           name: name.trim(),
           class: studentClass,
           roll,
@@ -91,7 +134,7 @@ export async function POST(request: Request) {
         .insert(scholarshipRegistrations)
         .values({
           studentId: student.id,
-          scholarshipId: activeScholarship.id,
+          scholarshipId: targetScholarshipId,
         })
         .returning();
 
@@ -101,6 +144,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         message: "Student registered successfully.",
+        studentId: result.student.studentId,
         student: result.student,
         scholarshipRegistration: result.registration,
       },

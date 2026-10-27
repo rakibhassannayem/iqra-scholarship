@@ -129,7 +129,7 @@ export default function UserForm({
 
           <div className="space-y-2">
             <Label htmlFor="user-role">Role</Label>
-            <Select value={role} onValueChange={setRole}>
+            <Select value={role} onValueChange={(val) => setRole(val ?? "admin")}>
               <SelectTrigger id="user-role">
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>

@@ -22,6 +22,8 @@ export const students = pgTable("students", {
   institutionId: integer("institution_id")
     .notNull()
     .references(() => institutions.id),
+  scholarshipId: integer("scholarship_id")
+    .references(() => scholarships.id),
   name: varchar("name", { length: 255 }).notNull(),
   class: integer("class").notNull(),
   roll: integer("roll").notNull(),
