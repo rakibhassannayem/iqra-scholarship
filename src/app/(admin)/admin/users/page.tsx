@@ -198,11 +198,11 @@ export default function UsersPage() {
         initialValues={
           editingUser
             ? {
-                name: editingUser.name,
-                email: editingUser.email,
-                password: "",
-                role: editingUser.role,
-              }
+              name: editingUser.name,
+              email: editingUser.email,
+              password: "",
+              role: editingUser.role,
+            }
             : emptyUserForm
         }
         editing={editingUser !== null}

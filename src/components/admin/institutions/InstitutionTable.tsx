@@ -2,6 +2,15 @@
 
 import { useMemo, useState } from "react";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Pencil,
   Trash2,
   Eye,
@@ -51,6 +60,8 @@ export default function InstitutionTable({
 }: InstitutionTableProps) {
   const [search, setSearch] = useState("");
   const [districtFilter, setDistrictFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const distinctDistricts = useMemo(() => {
     const map = new Map<string, string>();
@@ -95,6 +106,39 @@ export default function InstitutionTable({
   function clearFilters() {
     setSearch("");
     setDistrictFilter("all");
+    setPage(1);
+  }
+
+  const totalPages = Math.max(1, Math.ceil(filteredInstitutions.length / PAGE_SIZE));
+  const pagedInstitutions = filteredInstitutions.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE,
+  );
+
+  function handleSearchChange(value: string) {
+    setSearch(value);
+    setPage(1);
+  }
+
+  function handleDistrictChange(value: string) {
+    setDistrictFilter(value);
+    setPage(1);
+  }
+
+  function getPageNumbers() {
+    const pages: (number | "ellipsis")[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (page > 3) pages.push("ellipsis");
+      const start = Math.max(2, page - 1);
+      const end = Math.min(totalPages - 1, page + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (page < totalPages - 2) pages.push("ellipsis");
+      pages.push(totalPages);
+    }
+    return pages;
   }
 
   return (
@@ -106,7 +150,7 @@ export default function InstitutionTable({
           <Input
             placeholder="Search by institution name, EIIN, district, representative..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-9"
           />
         </div>
@@ -115,7 +159,7 @@ export default function InstitutionTable({
           {distinctDistricts.length > 0 && (
             <select
               value={districtFilter}
-              onChange={(e) => setDistrictFilter(e.target.value)}
+              onChange={(e) => handleDistrictChange(e.target.value)}
               className="h-9 rounded-md border border-input bg-background px-2.5 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
             >
               <option value="all">All Districts (সকল জেলা)</option>
@@ -145,9 +189,11 @@ export default function InstitutionTable({
         <span>
           Showing{" "}
           <strong className="text-foreground">
-            {filteredInstitutions.length}
+            {filteredInstitutions.length === 0
+              ? 0
+              : (page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filteredInstitutions.length)}
           </strong>{" "}
-          of {institutions.length} institutions
+          of {filteredInstitutions.length} institutions
         </span>
         {hasActiveFilters && (
           <span className="text-primary font-medium">Filtered results</span>
@@ -181,21 +227,22 @@ export default function InstitutionTable({
           )}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
+        <>
+          <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="border-b bg-muted/60 text-xs uppercase tracking-wider text-muted-foreground">
                 <tr>
-                  <th className="px-4 py-3.5 font-semibold">Institution & EIIN</th>
-                  <th className="px-4 py-3.5 font-semibold">Location / Address</th>
-                  <th className="px-4 py-3.5 font-semibold">Principal / Head</th>
-                  <th className="px-4 py-3.5 font-semibold">Representative</th>
+                  <th className="px-4 py-3.5 font-semibold">Institution</th>
+                  <th className="px-4 py-3.5 font-semibold">Address</th>
+                  <th className="px-4 py-3.5 font-semibold">Principal (মোহতামিম)</th>
+                  <th className="px-4 py-3.5 font-semibold">Representative (প্রতিনিধি)</th>
                   <th className="px-4 py-3.5 text-right font-semibold">Actions</th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-border">
-                {filteredInstitutions.map((institution) => {
+                {pagedInstitutions.map((institution) => {
                   const locationParts = [
                     institution.upazila,
                     institution.district,
@@ -330,6 +377,50 @@ export default function InstitutionTable({
             </table>
           </div>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <Pagination className="mt-4">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(1, p - 1)); }}
+                  aria-disabled={page === 1}
+                  className={page === 1 ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+
+              {getPageNumbers().map((item, idx) =>
+                item === "ellipsis" ? (
+                  <PaginationItem key={`ellipsis-${idx}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={item}>
+                    <PaginationLink
+                      href="#"
+                      isActive={page === item}
+                      onClick={(e) => { e.preventDefault(); setPage(item); }}
+                    >
+                      {item}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(totalPages, p + 1)); }}
+                  aria-disabled={page === totalPages}
+                  className={page === totalPages ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
+        </>
       )}
     </div>
   );

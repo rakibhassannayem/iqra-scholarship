@@ -6,39 +6,7 @@ import {
   scholarships,
   scholarshipRegistrations,
 } from "@/lib/db/schema";
-import { desc, eq } from "drizzle-orm";
-
-export async function GET() {
-  try {
-    const allStudents = await db
-      .select({
-        id: students.id,
-        studentId: students.studentId,
-        name: students.name,
-        class: students.class,
-        roll: students.roll,
-        institutionId: students.institutionId,
-        institutionName: institutions.name,
-        institutionEiin: institutions.eiin,
-        scholarshipId: students.scholarshipId,
-        scholarshipName: scholarships.name,
-        createdAt: students.createdAt,
-      })
-      .from(students)
-      .innerJoin(institutions, eq(students.institutionId, institutions.id))
-      .leftJoin(scholarships, eq(students.scholarshipId, scholarships.id))
-      .orderBy(desc(students.createdAt));
-
-    return NextResponse.json(allStudents);
-  } catch (error) {
-    console.error("Failed to fetch students:", error);
-
-    return NextResponse.json(
-      { message: "Failed to fetch students." },
-      { status: 500 },
-    );
-  }
-}
+import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
 
 function convertBengaliDigitsToEnglish(input: string): string {
   const banglaDigits: Record<string, string> = {
@@ -54,6 +22,88 @@ function convertBengaliDigitsToEnglish(input: string): string {
     "৯": "9",
   };
   return input.replace(/[০-৯]/g, (digit) => banglaDigits[digit] || digit);
+}
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const institutionIdParam = searchParams.get("institutionId");
+    const classParam = searchParams.get("class");
+    const searchParam = searchParams.get("search");
+
+    const conditions = [];
+
+    if (institutionIdParam) {
+      const parsedInstitutionId = Number(institutionIdParam);
+      if (!Number.isNaN(parsedInstitutionId)) {
+        conditions.push(eq(students.institutionId, parsedInstitutionId));
+      }
+    }
+
+    if (classParam) {
+      const normalizedClass = Number(
+        convertBengaliDigitsToEnglish(classParam.trim()),
+      );
+      if (!Number.isNaN(normalizedClass)) {
+        conditions.push(eq(students.class, normalizedClass));
+      }
+    }
+
+    if (searchParam && searchParam.trim()) {
+      const cleanSearch = searchParam.trim();
+      const engSearch = convertBengaliDigitsToEnglish(cleanSearch);
+      conditions.push(
+        or(
+          ilike(students.name, `%${cleanSearch}%`),
+          ilike(students.studentId, `%${engSearch}%`),
+          sql`CAST(${students.roll} AS TEXT) = ${engSearch}`,
+        ),
+      );
+    }
+
+    const whereClause =
+      conditions.length === 1
+        ? conditions[0]
+        : conditions.length > 1
+          ? and(...conditions)
+          : undefined;
+
+    const baseQuery = db
+      .select({
+        id: students.id,
+        studentId: students.studentId,
+        name: students.name,
+        class: students.class,
+        roll: students.roll,
+        institutionId: students.institutionId,
+        institutionName: institutions.name,
+        institutionEiin: institutions.eiin,
+        scholarshipId: students.scholarshipId,
+        scholarshipName: scholarships.name,
+        createdAt: students.createdAt,
+      })
+      .from(students)
+      .innerJoin(institutions, eq(students.institutionId, institutions.id))
+      .leftJoin(scholarships, eq(students.scholarshipId, scholarships.id));
+
+    const allStudents = await (whereClause
+      ? baseQuery.where(whereClause)
+      : baseQuery
+    ).orderBy(
+      institutionIdParam
+        ? sql`${students.class} ASC, ${students.roll} ASC, ${students.studentId} ASC`
+        : desc(students.createdAt),
+    );
+
+    return NextResponse.json(allStudents);
+  } catch (error) {
+    console.error("Failed to fetch students:", error);
+
+    return NextResponse.json(
+      { message: "Failed to fetch students." },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(request: Request) {

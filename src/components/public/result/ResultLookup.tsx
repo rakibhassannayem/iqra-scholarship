@@ -1,208 +1,307 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { Search, RotateCcw, Eye, GraduationCap } from "lucide-react";
+import { useState, useEffect, type FormEvent } from "react";
+import {
+  Search,
+  RotateCcw,
+  GraduationCap,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Eye,
+  Trophy,
+} from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageProvider";
 
-type ScholarshipResult = {
-  status: "awarded" | "not-awarded" | "pending";
-  category: string | null;
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type ResultStatus = "awarded" | "not-awarded" | "not-registered";
+
+type StudentResult = {
+  studentId: string;
+  name: string;
+  class: number;
+  roll: number;
+  institutionName?: string;
+  scholarshipName?: string | null;
+  result: {
+    status: ResultStatus;
+    category: string | null;
+  };
 };
 
-type Student = {
-  id: string;
+type Institution = {
+  id: number;
   name: string;
   eiin: string;
-  classId: string;
-  roll: string;
-  result: ScholarshipResult;
 };
 
-const institutions = [
-  { eiin: "123456", name: "Demo Madrasa 1" },
-  { eiin: "654321", name: "Demo Madrasa 2" },
-];
+function convertBengaliDigitsToEnglish(input: string): string {
+  const banglaDigits: Record<string, string> = {
+    "০": "0", "১": "1", "২": "2", "৩": "3", "৪": "4",
+    "৫": "5", "৬": "6", "৭": "7", "৮": "8", "৯": "9",
+  };
+  return input.replace(/[০-৯]/g, (d) => banglaDigits[d] || d);
+}
 
-// Temporary sample records for UI testing only.
-// Replace these with records fetched from your database.
+// ── Result Card ───────────────────────────────────────────────────────────────
 
-const demoStudents: Student[] = [
-  {
-    id: "iq26123456815",
-    name: "Demo Student One",
-    eiin: "123456",
-    classId: "8",
-    roll: "15",
-    result: {
-      status: "awarded",
-      category: "Talent Pool",
+function ResultCard({
+  student,
+  isBangla,
+}: {
+  student: StudentResult;
+  isBangla: boolean;
+}) {
+  const { status, category } = student.result;
+
+  const statusConfig = {
+    awarded: {
+      icon: <CheckCircle2 className="size-6 text-emerald-500" />,
+      label: isBangla ? "বৃত্তি পেয়েছে ✓" : "Scholarship Awarded ✓",
+      bg: "bg-emerald-50 dark:bg-emerald-950/30",
+      border: "border-emerald-200 dark:border-emerald-800",
+      text: "text-emerald-700 dark:text-emerald-400",
     },
-  },
-  {
-    id: "iq26123456816",
-    name: "Demo Student Two",
-    eiin: "123456",
-    classId: "8",
-    roll: "16",
-    result: {
-      status: "not-awarded",
-      category: null,
+    "not-awarded": {
+      icon: <XCircle className="size-6 text-rose-500" />,
+      label: isBangla ? "বৃত্তি পায়নি" : "Not Awarded",
+      bg: "bg-rose-50 dark:bg-rose-950/30",
+      border: "border-rose-200 dark:border-rose-800",
+      text: "text-rose-700 dark:text-rose-400",
     },
-  },
-  {
-    id: "iq26654321607",
-    name: "Demo Student Three",
-    eiin: "654321",
-    classId: "6",
-    roll: "7",
-    result: {
-      status: "pending",
-      category: null,
+    "not-registered": {
+      icon: <Clock className="size-6 text-amber-500" />,
+      label: isBangla ? "ফলাফল অপেক্ষমাণ" : "Result Pending",
+      bg: "bg-amber-50 dark:bg-amber-950/30",
+      border: "border-amber-200 dark:border-amber-800",
+      text: "text-amber-700 dark:text-amber-400",
     },
-  },
-];
+  }[status];
+
+  return (
+    <div className="mt-5 overflow-hidden rounded-2xl border bg-card shadow-sm">
+      {/* Header */}
+      <div className="border-b bg-muted/40 px-6 py-4">
+        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+          {isBangla ? "বৃত্তি পরীক্ষার ফলাফল" : "Scholarship Result"}
+        </p>
+        <h3 className="mt-1 text-xl font-bold">
+          {isBangla ? "ফলাফল বিবরণী" : "Result Summary"}
+        </h3>
+        <p className="mt-0.5 font-mono text-xs text-muted-foreground">
+          ID: {student.studentId}
+        </p>
+      </div>
+
+      {/* Info grid */}
+      <div className="grid gap-4 p-6 sm:grid-cols-2">
+        <div className="rounded-xl border bg-background p-4">
+          <p className="text-xs text-muted-foreground">
+            {isBangla ? "শিক্ষার্থীর নাম" : "Student Name"}
+          </p>
+          <p className="mt-1.5 font-semibold">{student.name}</p>
+        </div>
+
+        <div className="rounded-xl border bg-background p-4">
+          <p className="text-xs text-muted-foreground">
+            {isBangla ? "শ্রেণি / রোল" : "Class / Roll"}
+          </p>
+          <p className="mt-1.5 font-semibold">
+            {isBangla
+              ? `শ্রেণি ${student.class} / রোল ${student.roll}`
+              : `Class ${student.class} / Roll ${student.roll}`}
+          </p>
+        </div>
+
+        {student.institutionName && (
+          <div className="rounded-xl border bg-background p-4 sm:col-span-2">
+            <p className="text-xs text-muted-foreground">
+              {isBangla ? "প্রতিষ্ঠান" : "Institution"}
+            </p>
+            <p className="mt-1.5 font-semibold">{student.institutionName}</p>
+          </div>
+        )}
+
+        {student.scholarshipName && (
+          <div className="rounded-xl border bg-background p-4 sm:col-span-2">
+            <p className="text-xs text-muted-foreground">
+              {isBangla ? "বৃত্তি পরীক্ষা" : "Scholarship"}
+            </p>
+            <p className="mt-1.5 font-semibold">{student.scholarshipName}</p>
+          </div>
+        )}
+
+        {/* Status badge */}
+        <div
+          className={`flex items-center gap-3 rounded-xl border p-4 sm:col-span-2 ${statusConfig.bg} ${statusConfig.border}`}
+        >
+          {statusConfig.icon}
+          <div>
+            <p className="text-xs text-muted-foreground">
+              {isBangla ? "ফলাফল" : "Result Status"}
+            </p>
+            <p className={`mt-0.5 text-lg font-bold ${statusConfig.text}`}>
+              {statusConfig.label}
+            </p>
+          </div>
+        </div>
+
+        {/* Category */}
+        {status === "awarded" && category && (
+          <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 sm:col-span-2">
+            <Trophy className="size-6 shrink-0 text-primary" />
+            <div>
+              <p className="text-xs text-muted-foreground">
+                {isBangla ? "বৃত্তির ক্যাটাগরি" : "Scholarship Category"}
+              </p>
+              <p className="mt-0.5 text-lg font-bold text-primary">
+                {category}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {status === "not-awarded" && (
+          <p className="text-sm leading-6 text-muted-foreground sm:col-span-2">
+            {isBangla
+              ? "এই পরীক্ষায় শিক্ষার্থী বৃত্তির জন্য নির্বাচিত হয়নি।"
+              : "The student was not selected for a scholarship in this examination."}
+          </p>
+        )}
+
+        {status === "not-registered" && (
+          <p className="text-sm leading-6 text-muted-foreground sm:col-span-2">
+            {isBangla
+              ? "এই শিক্ষার্থীর ফলাফল এখনো প্রকাশিত হয়নি। পরে আবার দেখুন।"
+              : "This student's result has not been published yet. Please check again later."}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
 
 export default function ResultLookup() {
   const { language } = useLanguage();
   const isBangla = language === "bn";
 
-  const [studentId, setStudentId] = useState("");
-  const [searchedStudent, setSearchedStudent] = useState<Student | null>(null);
-  const [searchMessage, setSearchMessage] = useState("");
+  // --- ID tab ---
+  const [studentIdInput, setStudentIdInput] = useState("");
+  const [idLoading, setIdLoading] = useState(false);
+  const [idError, setIdError] = useState("");
+  const [idResult, setIdResult] = useState<StudentResult | null>(null);
 
-  const [selectedEiin, setSelectedEiin] = useState("");
+  // --- Institution tab ---
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [institutionsLoading, setInstitutionsLoading] = useState(true);
+  const [selectedInstitutionId, setSelectedInstitutionId] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
-  const [showStudentList, setShowStudentList] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [listLoading, setListLoading] = useState(false);
+  const [listError, setListError] = useState("");
+  const [studentList, setStudentList] = useState<StudentResult[] | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<StudentResult | null>(
+    null,
+  );
 
-  function handleIdSearch(event: FormEvent<HTMLFormElement>) {
+  // Fetch institutions on mount
+  useEffect(() => {
+    fetch("/api/institutions")
+      .then((res) => res.json())
+      .then((data: Institution[]) => setInstitutions(data))
+      .catch(() => {})
+      .finally(() => setInstitutionsLoading(false));
+  }, []);
+
+  // ── ID search ────────────────────────────────────────────────────────
+  async function handleIdSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const cleanId = convertBengaliDigitsToEnglish(studentIdInput.trim());
+    if (!cleanId) return;
 
-    const normalizedId = studentId.trim().toLowerCase();
-    const student = demoStudents.find(
-      (item) => item.id.toLowerCase() === normalizedId,
-    );
+    setIdLoading(true);
+    setIdError("");
+    setIdResult(null);
 
-    setSearchedStudent(student ?? null);
-    setSelectedStudent(null);
-    setSearchMessage(
-      student
-        ? ""
-        : isBangla
-          ? "এই ID-এর কোনো demo record পাওয়া যায়নি। বাস্তব ফলাফল খুঁজতে database সংযোগ প্রয়োজন।"
-          : "No demo record found for this ID. Database connection is required for real results.",
-    );
-  }
+    try {
+      const res = await fetch(
+        `/api/result?studentId=${encodeURIComponent(cleanId)}`,
+      );
+      const data = await res.json();
 
-  function handleStudentListSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setShowStudentList(true);
-    setSelectedStudent(null);
+      if (!res.ok) {
+        setIdError(
+          data.message ||
+            (isBangla
+              ? "এই ID-এর কোনো ফলাফল পাওয়া যায়নি।"
+              : "No result found for this Student ID."),
+        );
+      } else {
+        setIdResult(data as StudentResult);
+      }
+    } catch {
+      setIdError(
+        isBangla
+          ? "ফলাফল আনতে সমস্যা হয়েছে। আবার চেষ্টা করুন।"
+          : "Failed to fetch result. Please try again.",
+      );
+    } finally {
+      setIdLoading(false);
+    }
   }
 
   function resetIdSearch() {
-    setStudentId("");
-    setSearchedStudent(null);
-    setSearchMessage("");
+    setStudentIdInput("");
+    setIdError("");
+    setIdResult(null);
   }
 
-  const filteredStudents = demoStudents.filter(
-    (student) =>
-      student.eiin === selectedEiin && student.classId === selectedClass,
-  );
+  // ── Institution list search ──────────────────────────────────────────
+  async function handleListSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedInstitutionId || !selectedClass) return;
 
-  function renderStudentResult(student: Student) {
-    const result = student.result;
+    setListLoading(true);
+    setListError("");
+    setStudentList(null);
+    setSelectedStudent(null);
 
-    const statusLabel = {
-      awarded: isBangla ? "বৃত্তি পেয়েছে" : "Scholarship Awarded",
-      "not-awarded": isBangla ? "বৃত্তি পায়নি" : "Not Awarded",
-      pending: isBangla ? "ফলাফল অপেক্ষমাণ" : "Result Pending",
-    }[result.status];
+    try {
+      const res = await fetch(
+        `/api/result?institutionId=${encodeURIComponent(selectedInstitutionId)}&class=${encodeURIComponent(selectedClass)}`,
+      );
+      const data = await res.json();
 
-    return (
-      <div className="mt-5 rounded-2xl border bg-card p-5 sm:p-7">
-        <div className="border-b pb-5">
-          <p className="text-sm text-muted-foreground">
-            {isBangla
-              ? "বৃত্তি পরীক্ষার ফলাফল"
-              : "Scholarship Examination Result"}
-          </p>
-
-          <h3 className="mt-2 text-xl font-bold sm:text-2xl">
-            {isBangla ? "ফলাফল বিবরণী" : "Result Summary"}
-          </h3>
-
-          <p className="mt-2 break-all font-mono text-sm text-muted-foreground">
-            Student ID: {student.id}
-          </p>
-        </div>
-
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-xl border p-4">
-            <p className="text-sm text-muted-foreground">
-              {isBangla ? "শিক্ষার্থীর নাম" : "Student Name"}
-            </p>
-            <p className="mt-2 font-semibold">{student.name}</p>
-          </div>
-
-          <div className="rounded-xl border p-4">
-            <p className="text-sm text-muted-foreground">
-              {isBangla ? "শ্রেণি ও রোল" : "Class & Roll"}
-            </p>
-            <p className="mt-2 font-semibold">
-              {student.classId} / {student.roll}
-            </p>
-          </div>
-
-          <div className="rounded-xl border p-4 sm:col-span-2">
-            <p className="text-sm text-muted-foreground">
-              {isBangla ? "বৃত্তির ফলাফল" : "Scholarship Status"}
-            </p>
-
-            <p className="mt-2 text-lg font-bold">{statusLabel}</p>
-          </div>
-
-          {result.status === "awarded" && (
-            <div className="rounded-xl border p-4 sm:col-span-2">
-              <p className="text-sm text-muted-foreground">
-                {isBangla ? "বৃত্তির ক্যাটাগরি" : "Scholarship Category"}
-              </p>
-              <p className="mt-2 text-lg font-bold text-primary">
-                {result.category}
-              </p>
-            </div>
-          )}
-
-          {result.status === "not-awarded" && (
-            <p className="text-sm leading-6 text-muted-foreground sm:col-span-2">
-              {isBangla
-                ? "এই পরীক্ষায় শিক্ষার্থী বৃত্তির জন্য নির্বাচিত হয়নি।"
-                : "The student was not selected for a scholarship in this examination."}
-            </p>
-          )}
-
-          {result.status === "pending" && (
-            <p className="text-sm leading-6 text-muted-foreground sm:col-span-2">
-              {isBangla
-                ? "এই শিক্ষার্থীর ফলাফল এখনো প্রকাশিত হয়নি। পরে আবার পরীক্ষা করুন।"
-                : "This student's result has not been published yet. Please check again later."}
-            </p>
-          )}
-        </div>
-
-        <p className="mt-5 text-xs leading-5 text-muted-foreground">
-          {isBangla
-            ? "এটি UI demo result। প্রকৃত ফলাফল database থেকে আসবে।"
-            : "This is a UI demo result. Actual results will come from the database."}
-        </p>
-      </div>
-    );
+      if (!res.ok) {
+        setListError(
+          data.message ||
+            (isBangla
+              ? "তালিকা আনতে সমস্যা হয়েছে।"
+              : "Failed to load student list."),
+        );
+      } else {
+        setStudentList(data as StudentResult[]);
+      }
+    } catch {
+      setListError(
+        isBangla
+          ? "তালিকা আনতে সমস্যা হয়েছে। আবার চেষ্টা করুন।"
+          : "Failed to load student list. Please try again.",
+      );
+    } finally {
+      setListLoading(false);
+    }
   }
 
+  // ── Render ───────────────────────────────────────────────────────────
   return (
     <section className="bg-background px-4 py-16 sm:py-20">
       <div className="mx-auto max-w-4xl space-y-8">
+
+        {/* ── Card 1: Search by Student ID ─────────────────────────── */}
         <div className="rounded-2xl border bg-card p-5 shadow-sm sm:p-8">
           <div className="mb-6 flex items-start gap-4">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -210,11 +309,11 @@ export default function ResultLookup() {
             </div>
             <div>
               <h2 className="text-xl font-bold sm:text-2xl">
-                {isBangla ? "Student ID দিয়ে ফলাফল" : "Search by Student ID"}
+                {isBangla ? "Student ID দিয়ে ফলাফল" : "Search by Student ID"}
               </h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {isBangla
-                  ? "আপনার নিবন্ধনের সময় পাওয়া Student ID লিখুন।"
+                  ? "আপনার নিবন্ধনের সময় পাওয়া Student ID লিখুন।"
                   : "Enter the Student ID generated during registration."}
               </p>
             </div>
@@ -227,23 +326,26 @@ export default function ResultLookup() {
             <input
               type="text"
               required
-              value={studentId}
-              onChange={(event) => {
-                setStudentId(event.target.value);
-                setSearchedStudent(null);
-                setSearchMessage("");
+              value={studentIdInput}
+              onChange={(e) => {
+                setStudentIdInput(e.target.value);
+                setIdResult(null);
+                setIdError("");
               }}
-              placeholder={
-                isBangla ? "যেমন: iq26123456815" : "e.g. iq26123456815"
-              }
-              aria-label={isBangla ? "Student ID" : "Student ID"}
+              placeholder={isBangla ? "যেমন: 26123456815" : "e.g. 26123456815"}
+              aria-label="Student ID"
               className="h-11 min-w-0 flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
             <button
               type="submit"
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+              disabled={idLoading}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
             >
-              <Search className="size-4" />
+              {idLoading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Search className="size-4" />
+              )}
               {isBangla ? "ফলাফল খুঁজুন" : "Search"}
             </button>
             <button
@@ -256,18 +358,19 @@ export default function ResultLookup() {
             </button>
           </form>
 
-          {searchMessage && (
+          {idError && (
             <p
-              role="status"
-              className="mt-4 rounded-lg border p-4 text-sm leading-6"
+              role="alert"
+              className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"
             >
-              {searchMessage}
+              {idError}
             </p>
           )}
 
-          {searchedStudent && renderStudentResult(searchedStudent)}
+          {idResult && <ResultCard student={idResult} isBangla={isBangla} />}
         </div>
 
+        {/* ── Card 2: Browse by Institution ────────────────────────── */}
         <div className="rounded-2xl border bg-card p-5 shadow-sm sm:p-8">
           <div className="mb-6 flex items-start gap-4">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -281,14 +384,14 @@ export default function ResultLookup() {
               </h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {isBangla
-                  ? "প্রতিষ্ঠান ও শ্রেণি নির্বাচন করে শিক্ষার্থীদের তালিকা দেখুন।"
-                  : "Select your institution and class to browse the student list."}
+                  ? "প্রতিষ্ঠান ও শ্রেণি নির্বাচন করে শিক্ষার্থীদের তালিকা থেকে ফলাফল দেখুন।"
+                  : "Select your institution and class to browse the student list and view results."}
               </p>
             </div>
           </div>
 
           <form
-            onSubmit={handleStudentListSearch}
+            onSubmit={handleListSearch}
             className="grid gap-5 sm:grid-cols-2"
           >
             <div className="space-y-2">
@@ -301,20 +404,27 @@ export default function ResultLookup() {
               <select
                 id="result-institution"
                 required
-                value={selectedEiin}
-                onChange={(event) => {
-                  setSelectedEiin(event.target.value);
-                  setShowStudentList(false);
+                disabled={institutionsLoading}
+                value={selectedInstitutionId}
+                onChange={(e) => {
+                  setSelectedInstitutionId(e.target.value);
+                  setStudentList(null);
                   setSelectedStudent(null);
                 }}
-                className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
               >
                 <option value="">
-                  {isBangla ? "প্রতিষ্ঠান নির্বাচন করুন" : "Select institution"}
+                  {institutionsLoading
+                    ? isBangla
+                      ? "লোড হচ্ছে..."
+                      : "Loading..."
+                    : isBangla
+                      ? "প্রতিষ্ঠান নির্বাচন করুন"
+                      : "Select institution"}
                 </option>
-                {institutions.map((institution) => (
-                  <option key={institution.eiin} value={institution.eiin}>
-                    {institution.name} ({institution.eiin})
+                {institutions.map((inst) => (
+                  <option key={inst.id} value={String(inst.id)}>
+                    {inst.name} ({inst.eiin})
                   </option>
                 ))}
               </select>
@@ -331,9 +441,9 @@ export default function ResultLookup() {
                 id="result-class-list"
                 required
                 value={selectedClass}
-                onChange={(event) => {
-                  setSelectedClass(event.target.value);
-                  setShowStudentList(false);
+                onChange={(e) => {
+                  setSelectedClass(e.target.value);
+                  setStudentList(null);
                   setSelectedStudent(null);
                 }}
                 className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -341,90 +451,149 @@ export default function ResultLookup() {
                 <option value="">
                   {isBangla ? "শ্রেণি নির্বাচন করুন" : "Select class"}
                 </option>
-                {Array.from({ length: 10 }, (_, index) =>
-                  String(index + 1),
-                ).map((value) => (
-                  <option key={value} value={value}>
-                    {isBangla ? `শ্রেণি ${value}` : `Class ${value}`}
-                  </option>
-                ))}
+                {Array.from({ length: 10 }, (_, i) => String(i + 1)).map(
+                  (v) => (
+                    <option key={v} value={v}>
+                      {isBangla ? `শ্রেণি ${v}` : `Class ${v}`}
+                    </option>
+                  ),
+                )}
               </select>
             </div>
 
             <div className="sm:col-span-2">
               <button
                 type="submit"
-                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:opacity-90 sm:w-auto"
+                disabled={listLoading}
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60 sm:w-auto"
               >
-                <Search className="size-4" />
+                {listLoading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Search className="size-4" />
+                )}
                 {isBangla ? "শিক্ষার্থীদের তালিকা দেখুন" : "Show Students"}
               </button>
             </div>
           </form>
 
-          {showStudentList && (
+          {listError && (
+            <p
+              role="alert"
+              className="mt-5 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"
+            >
+              {listError}
+            </p>
+          )}
+
+          {studentList !== null && (
             <div className="mt-7">
               <h3 className="mb-3 text-lg font-bold">
                 {isBangla ? "শিক্ষার্থীদের তালিকা" : "Student List"}
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  ({studentList.length}{" "}
+                  {isBangla ? "জন" : "students"})
+                </span>
               </h3>
 
-              <div className="overflow-x-auto rounded-xl border">
-                <table className="w-full min-w-140 text-left text-sm">
-                  <thead className="bg-muted/60">
-                    <tr>
-                      <th className="px-4 py-3 font-semibold">Student ID</th>
-                      <th className="px-4 py-3 font-semibold">
-                        {isBangla ? "নাম" : "Name"}
-                      </th>
-                      <th className="px-4 py-3 font-semibold">
-                        {isBangla ? "রোল" : "Roll"}
-                      </th>
-                      <th className="px-4 py-3 text-right font-semibold">
-                        {isBangla ? "অ্যাকশন" : "Action"}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {filteredStudents.map((student) => (
-                      <tr key={student.id}>
-                        <td className="px-4 py-3 font-medium">{student.id}</td>
-                        <td className="px-4 py-3">{student.name}</td>
-                        <td className="px-4 py-3">{student.roll}</td>
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedStudent(student)}
-                            className="inline-flex items-center gap-1 rounded-md border px-3 py-2 font-medium hover:bg-muted"
-                          >
-                            <Eye className="size-4" />
-                            {isBangla ? "View" : "View"}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-
-                    {filteredStudents.length === 0 && (
+              {studentList.length === 0 ? (
+                <div className="rounded-xl border border-dashed py-12 text-center text-sm text-muted-foreground">
+                  {isBangla
+                    ? "এই শ্রেণিতে কোনো শিক্ষার্থী নেই।"
+                    : "No students found for this class."}
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border">
+                  <table className="w-full min-w-[560px] text-left text-sm">
+                    <thead className="bg-muted/60">
                       <tr>
-                        <td
-                          colSpan={4}
-                          className="px-4 py-8 text-center text-muted-foreground"
-                        >
-                          {isBangla
-                            ? "এই demo তালিকায় কোনো শিক্ষার্থী নেই। বাস্তব তালিকার জন্য database সংযোগ প্রয়োজন।"
-                            : "No students in this demo list. Connect the database to load real students."}
-                        </td>
+                        <th className="px-4 py-3 font-semibold">
+                          Student ID
+                        </th>
+                        <th className="px-4 py-3 font-semibold">
+                          {isBangla ? "নাম" : "Name"}
+                        </th>
+                        <th className="px-4 py-3 font-semibold">
+                          {isBangla ? "রোল" : "Roll"}
+                        </th>
+                        <th className="px-4 py-3 font-semibold">
+                          {isBangla ? "ফলাফল" : "Result"}
+                        </th>
+                        <th className="px-4 py-3 text-right font-semibold">
+                          {isBangla ? "বিস্তারিত" : "Details"}
+                        </th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y">
+                      {studentList.map((student) => {
+                        const badgeStyle = {
+                          awarded:
+                            "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+                          "not-awarded":
+                            "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400",
+                          "not-registered":
+                            "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
+                        }[student.result.status];
 
-              {selectedStudent && renderStudentResult(selectedStudent)}
-              <p className="mt-3 text-xs leading-5 text-muted-foreground">
-                {isBangla
-                  ? "এখানে দেখানো নাম ও তথ্যগুলো শুধু demo-এর জন্য।"
-                  : "Names and records shown here are demo data only."}
-              </p>
+                        const badgeLabel = {
+                          awarded: isBangla ? "বৃত্তি পেয়েছে" : "Awarded",
+                          "not-awarded": isBangla ? "পায়নি" : "Not Awarded",
+                          "not-registered": isBangla
+                            ? "অপেক্ষমাণ"
+                            : "Pending",
+                        }[student.result.status];
+
+                        return (
+                          <tr
+                            key={student.studentId}
+                            className="transition-colors hover:bg-muted/40"
+                          >
+                            <td className="px-4 py-3 font-mono text-xs font-medium">
+                              {student.studentId}
+                            </td>
+                            <td className="px-4 py-3">{student.name}</td>
+                            <td className="px-4 py-3">{student.roll}</td>
+                            <td className="px-4 py-3">
+                              <span
+                                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeStyle}`}
+                              >
+                                {badgeLabel}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSelectedStudent(
+                                    selectedStudent?.studentId ===
+                                      student.studentId
+                                      ? null
+                                      : student,
+                                  )
+                                }
+                                className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                              >
+                                <Eye className="size-3.5" />
+                                {selectedStudent?.studentId === student.studentId
+                                  ? isBangla
+                                    ? "বন্ধ করুন"
+                                    : "Close"
+                                  : isBangla
+                                    ? "দেখুন"
+                                    : "View"}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {selectedStudent && (
+                <ResultCard student={selectedStudent} isBangla={isBangla} />
+              )}
             </div>
           )}
         </div>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { institutions } from "@/lib/db/schema";
-import { desc } from "drizzle-orm";
+import { asc, desc } from "drizzle-orm";
 
 export async function POST(request: Request) {
   try {
@@ -73,7 +73,7 @@ export async function GET() {
     const allInstitutions = await db
       .select()
       .from(institutions)
-      .orderBy(desc(institutions.createdAt));
+      .orderBy(asc(institutions.name));
 
     return NextResponse.json(allInstitutions);
   } catch (error) {
