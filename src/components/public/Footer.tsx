@@ -32,6 +32,10 @@ export default function Footer() {
             {t("contact")}
           </Link>
 
+          <Link href="/download-admit" className="hover:text-foreground">
+            {t("downloadAdmit")}
+          </Link>
+
           <Link href="/result" className="hover:text-foreground">
             {t("result")}
           </Link>

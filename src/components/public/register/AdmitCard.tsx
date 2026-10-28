@@ -21,6 +21,7 @@ export type AdmitCardData = {
 type AdmitCardProps = {
   data: AdmitCardData;
   onReset?: () => void;
+  resetLabel?: string;
 };
 
 export function toBengaliNumber(num: string | number | undefined | null): string {
@@ -45,7 +46,7 @@ export function toBengaliClass(classNum: number | string): string {
   return classMap[Number(classNum)] || `শ্রেণি ${toBengaliNumber(classNum)}`;
 }
 
-export default function AdmitCard({ data, onReset }: AdmitCardProps) {
+export default function AdmitCard({ data, onReset, resetLabel }: AdmitCardProps) {
   const [copied, setCopied] = React.useState(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -126,7 +127,7 @@ export default function AdmitCard({ data, onReset }: AdmitCardProps) {
               onClick={onReset}
               className="gap-1 text-xs text-muted-foreground hover:text-foreground"
             >
-              <RefreshCw className="size-3.5" /> নতুন নিবন্ধন
+              <RefreshCw className="size-3.5" /> {resetLabel || "নতুন নিবন্ধন"}
             </Button>
           )}
         </div>

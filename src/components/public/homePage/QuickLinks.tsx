@@ -39,13 +39,13 @@ export default function QuickLinks() {
     },
     {
       id: 4,
-      title: t("certificate"),
+      title: t("downloadAdmit"),
       description:
         language === "bn"
-          ? "বৃত্তির সনদ যাচাইয়ের সুবিধা শিগগিরই আসছে।"
-          : "Scholarship certificate verification will be available soon.",
-      href: "/result",
-      icon: "📜",
+          ? "Student ID দিয়ে যেকোনো সময় প্রবেশপত্র প্রিন্ট বা ডাউনলোড করুন।"
+          : "Print or download your examination admit card anytime using Student ID.",
+      href: "/download-admit",
+      icon: "🎫",
     },
   ];
 

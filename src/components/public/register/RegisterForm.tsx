@@ -16,6 +16,22 @@ type Scholarship = {
   isActive: boolean;
 };
 
+function convertBengaliDigitsToEnglish(input: string): string {
+  const banglaDigits: Record<string, string> = {
+    "০": "0",
+    "১": "1",
+    "২": "2",
+    "৩": "3",
+    "৪": "4",
+    "৫": "5",
+    "৬": "6",
+    "৭": "7",
+    "৮": "8",
+    "৯": "9",
+  };
+  return input.replace(/[০-৯]/g, (digit) => banglaDigits[digit] || digit);
+}
+
 export default function RegisterForm() {
   const { language } = useLanguage();
   const isBangla = language === "bn";
@@ -127,6 +143,17 @@ export default function RegisterForm() {
       return;
     }
 
+    const numericRoll = Number(convertBengaliDigitsToEnglish(roll.trim()));
+
+    if (!numericRoll || Number.isNaN(numericRoll) || numericRoll < 1) {
+      setErrorMessage(
+        isBangla
+          ? "অনুগ্রহ করে একটি সঠিক রোল নম্বর লিখুন।"
+          : "Please enter a valid roll number.",
+      );
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -139,7 +166,7 @@ export default function RegisterForm() {
           name: studentName.trim(),
           institutionId: selectedInstitution.id,
           class: Number(classId),
-          roll: Number(roll),
+          roll: numericRoll,
         }),
       });
 
@@ -156,7 +183,7 @@ export default function RegisterForm() {
       setAdmitCardData({
         studentName: data.student?.name || studentName.trim(),
         studentId: data.studentId,
-        studentRoll: data.student?.roll || Number(roll),
+        studentRoll: data.student?.roll || numericRoll,
         studentClass: data.student?.class || Number(classId),
         institutionName: data.institutionName || selectedInstitution.name,
         institutionEiin: data.institutionEiin || selectedInstitution.eiin,
@@ -409,16 +436,17 @@ export default function RegisterForm() {
                   required
                   type="text"
                   inputMode="numeric"
-                  pattern="[0-9]+"
                   maxLength={10}
                   value={roll}
                   onChange={(event) => {
-                    setRoll(event.target.value.replace(/\D/g, "").slice(0, 10));
+                    setRoll(
+                      event.target.value.replace(/[^0-9০-৯]/g, "").slice(0, 10),
+                    );
                     setAdmitCardData(null);
                     setErrorMessage("");
                   }}
                   placeholder={
-                    isBangla ? "রোল নম্বর লিখুন" : "Enter roll number"
+                    isBangla ? "যেমন: ১২ বা 12" : "e.g. 12"
                   }
                   className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />

@@ -281,7 +281,6 @@ export default function GrantTable({
                     <TableHead>Scholarship</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Prize</TableHead>
-                    <TableHead>Granted Date</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -299,11 +298,6 @@ export default function GrantTable({
                           {grant.studentClass && (
                             <span className="font-sans text-[11px] bg-muted px-1.5 py-0.2 rounded">
                               Class {grant.studentClass}
-                            </span>
-                          )}
-                          {grant.studentRoll && (
-                            <span className="font-sans text-[11px] bg-muted px-1.5 py-0.2 rounded">
-                              Roll {grant.studentRoll}
                             </span>
                           )}
                         </div>
@@ -349,11 +343,6 @@ export default function GrantTable({
                             ? "Received"
                             : "Pending"}
                         </Badge>
-                      </TableCell>
-
-                      {/* Granted Date */}
-                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                        {formatDate(grant.grantedAt)}
                       </TableCell>
 
                       {/* Actions */}

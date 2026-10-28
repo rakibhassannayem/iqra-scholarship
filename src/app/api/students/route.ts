@@ -40,26 +40,54 @@ export async function GET() {
   }
 }
 
+function convertBengaliDigitsToEnglish(input: string): string {
+  const banglaDigits: Record<string, string> = {
+    "০": "0",
+    "১": "1",
+    "২": "2",
+    "৩": "3",
+    "৪": "4",
+    "৫": "5",
+    "৬": "6",
+    "৭": "7",
+    "৮": "8",
+    "৯": "9",
+  };
+  return input.replace(/[০-৯]/g, (digit) => banglaDigits[digit] || digit);
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const {
       name,
       institutionId,
-      class: studentClass,
-      roll,
+      class: rawClass,
+      roll: rawRoll,
       scholarshipId: customScholarshipId,
     } = body;
+
+    const parsedClass =
+      typeof rawClass === "string"
+        ? Number(convertBengaliDigitsToEnglish(rawClass.trim()))
+        : Number(rawClass);
+
+    const parsedRoll =
+      typeof rawRoll === "string"
+        ? Number(convertBengaliDigitsToEnglish(rawRoll.trim()))
+        : Number(rawRoll);
+
+    const parsedInstitutionId = Number(institutionId);
 
     if (
       typeof name !== "string" ||
       !name.trim() ||
-      !Number.isInteger(institutionId) ||
-      !Number.isInteger(studentClass) ||
-      studentClass < 1 ||
-      studentClass > 10 ||
-      !Number.isInteger(roll) ||
-      roll < 1
+      !Number.isInteger(parsedInstitutionId) ||
+      !Number.isInteger(parsedClass) ||
+      parsedClass < 1 ||
+      parsedClass > 10 ||
+      !Number.isInteger(parsedRoll) ||
+      parsedRoll < 1
     ) {
       return NextResponse.json(
         { message: "Valid name, institution, class, and roll are required." },
@@ -70,7 +98,7 @@ export async function POST(request: Request) {
     const [institution] = await db
       .select()
       .from(institutions)
-      .where(eq(institutions.id, institutionId));
+      .where(eq(institutions.id, parsedInstitutionId));
 
     if (!institution) {
       return NextResponse.json(
@@ -118,18 +146,18 @@ export async function POST(request: Request) {
     }
 
     const year = String(new Date().getFullYear()).slice(-2);
-    const studentId = `${year}${institution.eiin}${studentClass}${roll}`;
+    const studentId = `${year}${institution.eiin}${parsedClass}${parsedRoll}`;
 
     const result = await db.transaction(async (tx) => {
       const [student] = await tx
         .insert(students)
         .values({
           studentId,
-          institutionId,
+          institutionId: parsedInstitutionId,
           scholarshipId: targetScholarshipId,
           name: name.trim(),
-          class: studentClass,
-          roll,
+          class: parsedClass,
+          roll: parsedRoll,
         })
         .returning();
 

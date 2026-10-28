@@ -6,6 +6,7 @@ export const translations = {
     notice: "নোটিশ",
     contact: "যোগাযোগ",
     register: "নিবন্ধন",
+    downloadAdmit: "প্রবেশপত্র ডাউনলোড",
     result: "ফলাফল দেখুন",
     language: "বাং / EN",
 
@@ -47,6 +48,7 @@ export const translations = {
     notice: "Notice",
     contact: "Contact",
     register: "Register",
+    downloadAdmit: "Download Admit",
     result: "Check Result",
     language: "বাং / EN",
 
