@@ -12,6 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
+import { useState } from "react";
 
 export type Notice = {
   id: number;
@@ -26,6 +28,7 @@ type NoticeTableProps = {
   loading: boolean;
   onEdit: (notice: Notice) => void;
   onDelete: (notice: Notice) => void;
+  onTogglePublished: (notice: Notice, isPublished: boolean) => Promise<void>;
 };
 
 function formatDate(date: string) {
@@ -41,6 +44,7 @@ export default function NoticeTable({
   loading,
   onEdit,
   onDelete,
+  onTogglePublished,
 }: NoticeTableProps) {
   return (
     <Card>
@@ -90,11 +94,21 @@ export default function NoticeTable({
                   </TableCell>
 
                   <TableCell>
-                    <Badge
-                      variant={notice.isPublished ? "default" : "secondary"}
-                    >
-                      {notice.isPublished ? "Published" : "Draft"}
-                    </Badge>
+                    <div className="flex items-center gap-3">
+                      <Switch
+                        checked={notice.isPublished}
+                        onCheckedChange={(checked) => {
+                          void onTogglePublished(notice, checked);
+                        }}
+                        aria-label={`Publish ${notice.title}`}
+                      />
+
+                      <Badge
+                        variant={notice.isPublished ? "default" : "secondary"}
+                      >
+                        {notice.isPublished ? "Published" : "Draft"}
+                      </Badge>
+                    </div>
                   </TableCell>
 
                   <TableCell>

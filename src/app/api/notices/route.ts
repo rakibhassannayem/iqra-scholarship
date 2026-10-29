@@ -1,10 +1,23 @@
 import { NextResponse } from "next/server";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { notices } from "@/lib/db/schema";
+import { auth } from "../../../../auth";
 
 export async function POST(request: Request) {
   try {
+    const session = await auth();
+
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role ?? "")
+    ) {
+      return NextResponse.json(
+        { message: "You are not authorized to create notices." },
+        { status: 403 },
+      );
+    }
+
     const body = await request.json();
     const { title, content, isPublished } = body;
 
@@ -47,11 +60,15 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const publishedOnly = searchParams.get("published") === "true";
+
     const allNotices = await db
       .select()
       .from(notices)
+      .where(publishedOnly ? eq(notices.isPublished, true) : undefined)
       .orderBy(desc(notices.createdAt));
 
     return NextResponse.json(allNotices);

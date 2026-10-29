@@ -76,6 +76,53 @@ export default function NoticesPage() {
     setFormOpen(true);
   }
 
+  async function handleTogglePublished(notice: Notice, isPublished: boolean) {
+    setError("");
+    setSuccess("");
+
+    // UI-তে পরিবর্তনটি সঙ্গে সঙ্গে দেখানোর জন্য
+    setNotices((currentNotices) =>
+      currentNotices.map((item) =>
+        item.id === notice.id ? { ...item, isPublished } : item,
+      ),
+    );
+
+    try {
+      const response = await fetch(`/api/notices/${notice.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isPublished }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || data.error || "Failed to update notice status.",
+        );
+      }
+
+      setSuccess(
+        `Notice ${isPublished ? "published" : "moved to draft"} successfully.`,
+      );
+    } catch (err) {
+      // Update ব্যর্থ হলে আগের অবস্থায় ফিরিয়ে নেওয়া
+      setNotices((currentNotices) =>
+        currentNotices.map((item) =>
+          item.id === notice.id
+            ? { ...item, isPublished: notice.isPublished }
+            : item,
+        ),
+      );
+
+      setError(
+        err instanceof Error ? err.message : "Failed to update notice status.",
+      );
+    }
+  }
+
   async function handleSubmit(values: NoticeFormValues) {
     setSaving(true);
     setFormError("");
@@ -187,6 +234,7 @@ export default function NoticesPage() {
           setDeleteError("");
           setDeleteTarget(notice);
         }}
+        onTogglePublished={handleTogglePublished}
       />
 
       <NoticeForm

@@ -2,36 +2,33 @@
 
 import Link from "next/link";
 import { useLanguage } from "@/i18n/LanguageProvider";
+import { useEffect, useState } from "react";
 
-const notices = [
-  {
-    id: 1,
-    title: {
-      bn: "বৃত্তি পরীক্ষার সময়সূচি শিগগিরই প্রকাশিত হবে",
-      en: "Scholarship examination schedule will be published soon",
-    },
-    href: "/notices",
-  },
-  {
-    id: 2,
-    title: {
-      bn: "শিক্ষার্থীদের নিবন্ধন সংক্রান্ত গুরুত্বপূর্ণ ঘোষণা",
-      en: "Important announcement regarding student registration",
-    },
-    href: "/notices",
-  },
-  {
-    id: 3,
-    title: {
-      bn: "সর্বশেষ বিজ্ঞপ্তি ও আপডেট দেখুন",
-      en: "View the latest notices and updates",
-    },
-    href: "/notices",
-  },
-];
+type Notice = {
+  id: number;
+  title: string;
+};
 
 export default function NoticeBanner() {
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
+  const [notices, setNotices] = useState<Notice[]>([]);
+
+  useEffect(() => {
+    async function fetchNotices() {
+      try {
+        const response = await fetch("/api/notices?published=true");
+
+        if (!response.ok) return;
+
+        const data: Notice[] = await response.json();
+        setNotices(data);
+      } catch (error) {
+        console.error("Failed to load notices:", error);
+      }
+    }
+
+    void fetchNotices();
+  }, []);
 
   return (
     <section
@@ -49,13 +46,13 @@ export default function NoticeBanner() {
             {[...notices, ...notices].map((notice, index) => (
               <Link
                 key={`${notice.id}-${index}`}
-                href={notice.href}
+                href="/notices"
                 className="shrink-0 text-sm font-medium text-secondary-foreground transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
               >
                 <span className="mr-2 text-primary" aria-hidden="true">
                   •
                 </span>
-                {notice.title[language]}
+                {notice.title}
               </Link>
             ))}
           </div>

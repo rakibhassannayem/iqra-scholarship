@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { notices } from "@/lib/db/schema";
+import { auth } from "../../../../../auth";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -57,6 +58,18 @@ export async function GET(_request: Request, context: RouteContext) {
 // PATCH: notice update করা
 export async function PATCH(request: Request, context: RouteContext) {
   try {
+    const session = await auth();
+
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role ?? "")
+    ) {
+      return NextResponse.json(
+        { message: "You are not authorized to update notices." },
+        { status: 403 },
+      );
+    }
+
     const id = await getNoticeId(context);
 
     if (id === null) {
@@ -134,6 +147,9 @@ export async function PATCH(request: Request, context: RouteContext) {
 // DELETE: notice delete করা
 export async function DELETE(_request: Request, context: RouteContext) {
   try {
+    {
+      message: "You are not authorized to delete notices.";
+    }
     const id = await getNoticeId(context);
 
     if (id === null) {
