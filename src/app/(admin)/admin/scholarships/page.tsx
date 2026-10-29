@@ -88,13 +88,18 @@ export default function ScholarshipsPage() {
       examCenter: scholarship.examCenter ?? "",
       examDate: scholarship.examDate ?? "",
       examTime: scholarship.examTime ?? "",
+      examStartTime: scholarship.examStartTime ?? "",
+      examEndTime: scholarship.examEndTime ?? "",
     });
     setError("");
     setSuccess("");
     setFormOpen(true);
   }
 
-  async function handleToggleActive(scholarship: Scholarship, nextActive: boolean) {
+  async function handleToggleActive(
+    scholarship: Scholarship,
+    nextActive: boolean,
+  ) {
     setTogglingId(scholarship.id);
     setError("");
     setSuccess("");
@@ -136,7 +141,9 @@ export default function ScholarshipsPage() {
     } catch (err) {
       setScholarships(previousScholarships);
       setError(
-        err instanceof Error ? err.message : "Failed to update scholarship status.",
+        err instanceof Error
+          ? err.message
+          : "Failed to update scholarship status.",
       );
     } finally {
       setTogglingId(null);
@@ -222,7 +229,8 @@ export default function ScholarshipsPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Scholarships</h2>
           <p className="text-sm text-muted-foreground">
-            Create and manage scholarship programs. Only one scholarship can be active at a time.
+            Create and manage scholarship programs. Only one scholarship can be
+            active at a time.
           </p>
         </div>
 

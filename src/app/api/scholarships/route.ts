@@ -36,6 +36,8 @@ export async function POST(request: NextRequest) {
       examCenter,
       examDate,
       examTime,
+      examStartTime,
+      examEndTime,
     } = body;
 
     if (
@@ -76,9 +78,26 @@ export async function POST(request: NextRequest) {
         endDate: parsedEndDate,
         eligibility: eligibility.trim(),
         isActive: false,
-        examCenter: typeof examCenter === "string" && examCenter.trim() ? examCenter.trim() : null,
-        examDate: typeof examDate === "string" && examDate.trim() ? examDate.trim() : null,
-        examTime: typeof examTime === "string" && examTime.trim() ? examTime.trim() : null,
+        examCenter:
+          typeof examCenter === "string" && examCenter.trim()
+            ? examCenter.trim()
+            : null,
+        examDate:
+          typeof examDate === "string" && examDate.trim()
+            ? examDate.trim()
+            : null,
+        examTime:
+          typeof examTime === "string" && examTime.trim()
+            ? examTime.trim()
+            : null,
+        examStartTime:
+          typeof examStartTime === "string" && examStartTime.trim()
+            ? examStartTime.trim()
+            : null,
+        examEndTime:
+          typeof examEndTime === "string" && examEndTime.trim()
+            ? examEndTime.trim()
+            : null,
       })
       .returning();
 

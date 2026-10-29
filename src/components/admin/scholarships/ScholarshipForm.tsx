@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useEffect, useState } from "react";
 
 export type ScholarshipFormValues = {
   name: string;
@@ -21,6 +22,8 @@ export type ScholarshipFormValues = {
   examCenter: string;
   examDate: string;
   examTime: string;
+  examStartTime: string;
+  examEndTime: string;
 };
 
 type ScholarshipFormProps = {
@@ -42,6 +45,8 @@ export const emptyScholarshipForm: ScholarshipFormValues = {
   examCenter: "",
   examDate: "",
   examTime: "",
+  examStartTime: "",
+  examEndTime: "",
 };
 
 export default function ScholarshipForm({
@@ -53,10 +58,71 @@ export default function ScholarshipForm({
   error,
   onSubmit,
 }: ScholarshipFormProps) {
+  const [startHour, setStartHour] = useState("11");
+  const [startMinute, setStartMinute] = useState("00");
+  const [startPeriod, setStartPeriod] = useState<"AM" | "PM">("AM");
+
+  const [endHour, setEndHour] = useState("12");
+  const [endMinute, setEndMinute] = useState("00");
+  const [endPeriod, setEndPeriod] = useState<"AM" | "PM">("PM");
+
+  useEffect(() => {
+    if (!open) return;
+
+    function parseTime(
+      value: string,
+      fallback: { hour: string; minute: string; period: "AM" | "PM" },
+    ) {
+      const match = value.match(
+        /^(সকাল|বিকাল|দুপুর|রাত)?\s*(\d{1,2}):(\d{2})\s*টা?$/,
+      );
+
+      if (!match) return fallback;
+
+      const [, label, hour, minute] = match;
+
+      return {
+        hour: hour.padStart(2, "0"),
+        minute,
+        period: (label === "বিকাল" || label === "রাত" ? "PM" : "AM") as
+          | "AM"
+          | "PM",
+      };
+    }
+
+    const start = parseTime(initialValues.examStartTime, {
+      hour: "11",
+      minute: "00",
+      period: "AM",
+    });
+
+    const end = parseTime(initialValues.examEndTime, {
+      hour: "12",
+      minute: "00",
+      period: "PM",
+    });
+
+    setStartHour(start.hour);
+    setStartMinute(start.minute);
+    setStartPeriod(start.period);
+
+    setEndHour(end.hour);
+    setEndMinute(end.minute);
+    setEndPeriod(end.period);
+  }, [open, initialValues.examStartTime, initialValues.examEndTime]);
+
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget);
+
+    const formatTime = (hour: string, minute: string, period: "AM" | "PM") => {
+      const periodLabel = period === "AM" ? "সকাল" : "বিকাল";
+      return `${periodLabel} ${hour}:${minute} টা`;
+    };
+
+    const examStartTime = formatTime(startHour, startMinute, startPeriod);
+    const examEndTime = formatTime(endHour, endMinute, endPeriod);
 
     onSubmit({
       name: String(formData.get("name") ?? ""),
@@ -66,7 +132,9 @@ export default function ScholarshipForm({
       eligibility: String(formData.get("eligibility") ?? ""),
       examCenter: String(formData.get("examCenter") ?? ""),
       examDate: String(formData.get("examDate") ?? ""),
-      examTime: String(formData.get("examTime") ?? ""),
+      examTime: `${examStartTime} হতে ${examEndTime}`,
+      examStartTime,
+      examEndTime,
     });
   }
 
@@ -147,11 +215,12 @@ export default function ScholarshipForm({
             <div className="flex items-center gap-2">
               <div className="size-2 rounded-full bg-primary" />
               <h4 className="font-semibold text-sm">
-                Admit Card-এর জন্য পরীক্ষার তথ্য (ঐচ্ছিক)
+                Admit Card-এর জন্য পরীক্ষার তথ্য (আবশ্যক)
               </h4>
             </div>
             <p className="text-xs text-muted-foreground">
-              এই ফিল্ডগুলো পূরণ করলে রেজিস্ট্রেশন শেষে শিক্ষার্থীর প্রবেশপত্রে (Admit Card) পরীক্ষার কেন্দ্র, তারিখ ও সময় সরাসরি প্রদর্শিত হবে।
+              এই ফিল্ডগুলো পূরণ করলে রেজিস্ট্রেশন শেষে শিক্ষার্থীর প্রবেশপত্রে
+              (Admit Card) পরীক্ষার কেন্দ্র, তারিখ ও সময় সরাসরি প্রদর্শিত হবে।
             </p>
 
             <div className="space-y-2">
@@ -159,6 +228,7 @@ export default function ScholarshipForm({
               <Input
                 id="examCenter"
                 name="examCenter"
+                required
                 maxLength={500}
                 defaultValue={initialValues.examCenter}
                 placeholder="যেমন: ইকরা একাডেমি অডিটোরিয়াম, ঢাকা"
@@ -171,21 +241,124 @@ export default function ScholarshipForm({
                 <Input
                   id="examDate"
                   name="examDate"
-                  maxLength={100}
+                  type="date"
+                  required
                   defaultValue={initialValues.examDate}
-                  placeholder="যেমন: ২৫ এপ্রিল, ২০২৬"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="examTime">Exam Time (পরীক্ষার সময়)</Label>
-                <Input
-                  id="examTime"
-                  name="examTime"
-                  maxLength={100}
-                  defaultValue={initialValues.examTime}
-                  placeholder="যেমন: সকাল ১০:০০ টা - দুপুর ১২:০০ টা"
-                />
+              <div className="space-y-3">
+                <Label>Exam Time (পরীক্ষার সময়)</Label>
+
+                {/* Start Time */}
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">
+                    Start Time — শুরুর সময়
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <select
+                      required
+                      value={startHour}
+                      onChange={(event) => setStartHour(event.target.value)}
+                      className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      aria-label="Start hour"
+                    >
+                      {Array.from({ length: 12 }, (_, index) => {
+                        const hour = String(index + 1).padStart(2, "0");
+                        return (
+                          <option key={hour} value={hour}>
+                            {hour}
+                          </option>
+                        );
+                      })}
+                    </select>
+
+                    <select
+                      required
+                      value={startMinute}
+                      onChange={(event) => setStartMinute(event.target.value)}
+                      className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      aria-label="Start minute"
+                    >
+                      {Array.from({ length: 60 }, (_, index) => {
+                        const minute = String(index).padStart(2, "0");
+                        return (
+                          <option key={minute} value={minute}>
+                            {minute}
+                          </option>
+                        );
+                      })}
+                    </select>
+
+                    <select
+                      required
+                      value={startPeriod}
+                      onChange={(event) =>
+                        setStartPeriod(event.target.value as "AM" | "PM")
+                      }
+                      className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      aria-label="Start AM or PM"
+                    >
+                      <option value="AM">AM — সকাল</option>
+                      <option value="PM">PM — বিকাল</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* End Time */}
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">
+                    End Time — শেষের সময়
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <select
+                      required
+                      value={endHour}
+                      onChange={(event) => setEndHour(event.target.value)}
+                      className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      aria-label="End hour"
+                    >
+                      {Array.from({ length: 12 }, (_, index) => {
+                        const hour = String(index + 1).padStart(2, "0");
+                        return (
+                          <option key={hour} value={hour}>
+                            {hour}
+                          </option>
+                        );
+                      })}
+                    </select>
+
+                    <select
+                      required
+                      value={endMinute}
+                      onChange={(event) => setEndMinute(event.target.value)}
+                      className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      aria-label="End minute"
+                    >
+                      {Array.from({ length: 60 }, (_, index) => {
+                        const minute = String(index).padStart(2, "0");
+                        return (
+                          <option key={minute} value={minute}>
+                            {minute}
+                          </option>
+                        );
+                      })}
+                    </select>
+
+                    <select
+                      required
+                      value={endPeriod}
+                      onChange={(event) =>
+                        setEndPeriod(event.target.value as "AM" | "PM")
+                      }
+                      className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      aria-label="End AM or PM"
+                    >
+                      <option value="AM">AM — সকাল</option>
+                      <option value="PM">PM — বিকাল</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

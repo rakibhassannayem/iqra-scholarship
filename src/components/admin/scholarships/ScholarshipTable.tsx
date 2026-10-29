@@ -28,6 +28,8 @@ export type Scholarship = {
   examTime: string | null;
   createdAt: string;
   updatedAt: string;
+  examStartTime: string | null;
+  examEndTime: string | null;
 };
 
 type ScholarshipTableProps = {
@@ -158,7 +160,7 @@ export default function ScholarshipTable({
                             "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
                             scholarship.isActive
                               ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30"
-                              : "bg-muted text-muted-foreground"
+                              : "bg-muted text-muted-foreground",
                           )}
                         >
                           {isToggling ? (
@@ -169,7 +171,7 @@ export default function ScholarshipTable({
                                 "size-1.5 rounded-full",
                                 scholarship.isActive
                                   ? "bg-emerald-500 animate-pulse"
-                                  : "bg-muted-foreground/50"
+                                  : "bg-muted-foreground/50",
                               )}
                             />
                           )}

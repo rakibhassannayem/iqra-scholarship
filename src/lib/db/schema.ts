@@ -37,8 +37,7 @@ export const students = pgTable("students", {
   institutionId: integer("institution_id")
     .notNull()
     .references(() => institutions.id),
-  scholarshipId: integer("scholarship_id")
-    .references(() => scholarships.id),
+  scholarshipId: integer("scholarship_id").references(() => scholarships.id),
   name: varchar("name", { length: 255 }).notNull(),
   class: integer("class").notNull(),
   roll: integer("roll").notNull(),
@@ -58,6 +57,8 @@ export const scholarships = pgTable("scholarships", {
   examCenter: varchar("exam_center", { length: 500 }),
   examDate: varchar("exam_date", { length: 100 }),
   examTime: varchar("exam_time", { length: 100 }),
+  examStartTime: varchar("exam_start_time", { length: 100 }),
+  examEndTime: varchar("exam_end_time", { length: 100 }),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

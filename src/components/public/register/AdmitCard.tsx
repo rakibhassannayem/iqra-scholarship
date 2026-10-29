@@ -24,7 +24,9 @@ type AdmitCardProps = {
   resetLabel?: string;
 };
 
-export function toBengaliNumber(num: string | number | undefined | null): string {
+export function toBengaliNumber(
+  num: string | number | undefined | null,
+): string {
   if (num === undefined || num === null) return "";
   const banglaDigits = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
   return String(num).replace(/[0-9]/g, (digit) => banglaDigits[Number(digit)]);
@@ -46,7 +48,62 @@ export function toBengaliClass(classNum: number | string): string {
   return classMap[Number(classNum)] || `শ্রেণি ${toBengaliNumber(classNum)}`;
 }
 
-export default function AdmitCard({ data, onReset, resetLabel }: AdmitCardProps) {
+export function formatBengaliDate(dateString: string | undefined): string {
+  if (!dateString) return "";
+
+  const date = new Date(`${dateString.slice(0, 10)}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) return dateString;
+
+  return new Intl.DateTimeFormat("bn-BD", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+export function formatBengaliExamTime(time: string | undefined): string {
+  if (!time) return "";
+
+  const formatPart = (part: string) => {
+    const match = part.trim().match(/^(সকাল|বিকাল)\s*(\d{1,2}):(\d{2})\s*টা$/);
+
+    if (!match) return part.trim();
+
+    const [, period, hour, minute] = match;
+    const formattedHour = toBengaliNumber(Number(hour));
+
+    if (minute === "00") {
+      return { period, time: `${formattedHour} টা` };
+    }
+
+    return {
+      period,
+      time: `${formattedHour}:${toBengaliNumber(minute)}`,
+    };
+  };
+
+  const parts = time.split(/\s+হতে\s+/);
+
+  if (parts.length !== 2) {
+    return toBengaliNumber(time);
+  }
+
+  const start = formatPart(parts[0]);
+  const end = formatPart(parts[1]);
+
+  if (typeof start === "string" || typeof end === "string") {
+    return toBengaliNumber(time);
+  }
+
+  return `${start.period} ${start.time} হতে ${end.time}`;
+}
+
+export default function AdmitCard({
+  data,
+  onReset,
+  resetLabel,
+}: AdmitCardProps) {
   const [copied, setCopied] = React.useState(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -57,12 +114,9 @@ export default function AdmitCard({ data, onReset, resetLabel }: AdmitCardProps)
       ? `নূরানী শিক্ষা বৃত্তি-${toBengaliNumber(data.academicYear)}ইং`
       : "নূরানী শিক্ষা বৃত্তি-২০২৬ইং");
 
-  const examCenter =
-    data.examCenter || "ঘাটাইল আলিম মাদ্রাসা, মেইন রোড, ঘাটাইল";
-  const examDate =
-    data.examDate || "০৬-১০-২০২৬ইং শুক্রবার";
-  const examTime =
-    data.examTime || "সকাল: ০৯টা হতে ১১টা";
+  const examCenter = data.examCenter || "";
+  const examDate = data.examDate || "";
+  const examTime = data.examTime || "";
 
   async function handleCopyId() {
     try {
@@ -153,7 +207,8 @@ export default function AdmitCard({ data, onReset, resetLabel }: AdmitCardProps)
                 className="text-2xl font-black tracking-tight sm:text-3xl md:text-[34px] leading-tight"
                 style={{
                   color: "#0f2d59",
-                  fontFamily: "'Hind Siliguri', 'Kalpurush', 'SolaimanLipi', sans-serif",
+                  fontFamily:
+                    "'Hind Siliguri', 'Kalpurush', 'SolaimanLipi', sans-serif",
                 }}
               >
                 ইকরা শিক্ষা পরিবার, ঘাটাইল, টাঙ্গাইল
@@ -254,7 +309,7 @@ export default function AdmitCard({ data, onReset, resetLabel }: AdmitCardProps)
                       পরীক্ষার তারিখ:
                     </span>
                     <span className="font-bold text-[#111827]">
-                      {examDate}
+                      {formatBengaliDate(examDate)}
                     </span>
                   </div>
 
@@ -274,7 +329,7 @@ export default function AdmitCard({ data, onReset, resetLabel }: AdmitCardProps)
                       পরীক্ষার সময়:
                     </span>
                     <span className="font-bold text-[#111827]">
-                      {examTime}
+                      {formatBengaliExamTime(examTime)}
                     </span>
                   </div>
                 </div>
