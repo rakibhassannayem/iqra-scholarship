@@ -7,6 +7,7 @@ import {
   integer,
   boolean,
   uniqueIndex,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 export const institutions = pgTable("institutions", {
@@ -163,5 +164,27 @@ export const notices = pgTable("notices", {
   title: varchar("title", { length: 255 }).notNull(),
   content: varchar("content", { length: 5000 }).notNull(),
   isPublished: boolean("is_published").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const activityLogs = pgTable("activity_logs", {
+  id: serial("id").primaryKey(),
+
+  userId: integer("user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+
+  action: varchar("action", { length: 50 }).notNull(),
+
+  module: varchar("module", { length: 100 }).notNull(),
+
+  recordId: integer("record_id"),
+
+  description: varchar("description", { length: 1000 }).notNull(),
+
+  previousData: jsonb("previous_data"),
+
+  newData: jsonb("new_data"),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
