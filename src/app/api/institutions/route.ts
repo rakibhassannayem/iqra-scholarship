@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { institutions } from "@/lib/db/schema";
-import { asc, desc } from "drizzle-orm";
+import { institutions, activityLogs } from "@/lib/db/schema";
+import { asc } from "drizzle-orm";
 
 export async function POST(request: Request) {
   try {
@@ -34,28 +34,55 @@ export async function POST(request: Request) {
       );
     }
 
-    const [institution] = await db
-      .insert(institutions)
-      .values({
-        name: name.trim(),
-        eiin: eiin.trim(),
-        principal: typeof principal === "string" ? principal.trim() : null,
-        principalPhone:
-          typeof principalPhone === "string" ? principalPhone.trim() : null,
-        representative:
-          typeof representative === "string" ? representative.trim() : null,
-        representativePhone:
-          typeof representativePhone === "string"
-            ? representativePhone.trim()
-            : null,
-        division: typeof division === "string" ? division.trim() : null,
-        district: typeof district === "string" ? district.trim() : null,
-        upazila: typeof upazila === "string" ? upazila.trim() : null,
-        village: typeof village === "string" ? village.trim() : null,
-        block: typeof block === "string" ? block.trim() : null,
-        address: typeof address === "string" ? address.trim() : null,
-      })
-      .returning();
+    const institution = await db.transaction(async (tx) => {
+      const [createdInstitution] = await tx
+        .insert(institutions)
+        .values({
+          name: name.trim(),
+          eiin: eiin.trim(),
+          principal: typeof principal === "string" ? principal.trim() : null,
+          principalPhone:
+            typeof principalPhone === "string" ? principalPhone.trim() : null,
+          representative:
+            typeof representative === "string" ? representative.trim() : null,
+          representativePhone:
+            typeof representativePhone === "string"
+              ? representativePhone.trim()
+              : null,
+          division: typeof division === "string" ? division.trim() : null,
+          district: typeof district === "string" ? district.trim() : null,
+          upazila: typeof upazila === "string" ? upazila.trim() : null,
+          village: typeof village === "string" ? village.trim() : null,
+          block: typeof block === "string" ? block.trim() : null,
+          address: typeof address === "string" ? address.trim() : null,
+        })
+        .returning();
+
+      await tx.insert(activityLogs).values({
+        userId: null,
+        action: "CREATE",
+        module: "INSTITUTION",
+        recordId: createdInstitution.id,
+        description: `Institution ${createdInstitution.name} (EIIN: ${createdInstitution.eiin}) created successfully.`,
+        previousData: null,
+        newData: {
+          name: createdInstitution.name,
+          eiin: createdInstitution.eiin,
+          principal: createdInstitution.principal,
+          principalPhone: createdInstitution.principalPhone,
+          representative: createdInstitution.representative,
+          representativePhone: createdInstitution.representativePhone,
+          division: createdInstitution.division,
+          district: createdInstitution.district,
+          upazila: createdInstitution.upazila,
+          village: createdInstitution.village,
+          block: createdInstitution.block,
+          address: createdInstitution.address,
+        },
+      });
+
+      return createdInstitution;
+    });
 
     return NextResponse.json(institution, { status: 201 });
   } catch (error) {

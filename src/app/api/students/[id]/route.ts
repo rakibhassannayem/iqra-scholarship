@@ -5,6 +5,7 @@ import {
   students,
   scholarships,
   scholarshipRegistrations,
+  activityLogs,
 } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -152,11 +153,39 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       updateData.scholarshipId = customScholarshipId;
     }
 
-    const [updatedStudent] = await db
-      .update(students)
-      .set(updateData)
-      .where(eq(students.id, studentId))
-      .returning();
+    const updatedStudent = await db.transaction(async (tx) => {
+      const [student] = await tx
+        .update(students)
+        .set(updateData)
+        .where(eq(students.id, studentId))
+        .returning();
+
+      await tx.insert(activityLogs).values({
+        userId: null,
+        action: "UPDATE",
+        module: "STUDENT",
+        recordId: student.id,
+        description: `Student ${student.name} (${student.studentId}) updated successfully.`,
+        previousData: {
+          studentId: existingStudent.studentId,
+          name: existingStudent.name,
+          institutionId: existingStudent.institutionId,
+          scholarshipId: existingStudent.scholarshipId,
+          class: existingStudent.class,
+          roll: existingStudent.roll,
+        },
+        newData: {
+          studentId: student.studentId,
+          name: student.name,
+          institutionId: student.institutionId,
+          scholarshipId: student.scholarshipId,
+          class: student.class,
+          roll: student.roll,
+        },
+      });
+
+      return student;
+    });
 
     return NextResponse.json(updatedStudent);
   } catch (error) {
@@ -194,6 +223,27 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
         .where(eq(students.id, studentId))
         .returning();
 
+      if (!deletedStudent) {
+        return null;
+      }
+
+      await tx.insert(activityLogs).values({
+        userId: null,
+        action: "DELETE",
+        module: "STUDENT",
+        recordId: deletedStudent.id,
+        description: `Student ${deletedStudent.name} (${deletedStudent.studentId}) deleted successfully.`,
+        previousData: {
+          studentId: deletedStudent.studentId,
+          name: deletedStudent.name,
+          institutionId: deletedStudent.institutionId,
+          scholarshipId: deletedStudent.scholarshipId,
+          class: deletedStudent.class,
+          roll: deletedStudent.roll,
+        },
+        newData: null,
+      });
+
       return deletedStudent;
     });
 
@@ -212,7 +262,10 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
     console.error("Failed to delete student:", error);
 
     return NextResponse.json(
-      { message: "Failed to delete student. It may be linked to an awarded grant." },
+      {
+        message:
+          "Failed to delete student. It may be linked to an awarded grant.",
+      },
       { status: 500 },
     );
   }

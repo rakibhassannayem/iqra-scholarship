@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { institutions } from "@/lib/db/schema";
+import { activityLogs, institutions } from "@/lib/db/schema";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -93,7 +93,8 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     }
 
     if (principal !== undefined) {
-      updates.principal = typeof principal === "string" ? principal.trim() : null;
+      updates.principal =
+        typeof principal === "string" ? principal.trim() : null;
     }
 
     if (principalPhone !== undefined) {
@@ -144,11 +145,61 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       );
     }
 
-    const [updatedInstitution] = await db
-      .update(institutions)
-      .set(updates)
-      .where(eq(institutions.id, institutionId))
-      .returning();
+    const updatedInstitution = await db.transaction(async (tx) => {
+      const [existingInstitution] = await tx
+        .select()
+        .from(institutions)
+        .where(eq(institutions.id, institutionId))
+        .limit(1);
+
+      if (!existingInstitution) {
+        return null;
+      }
+
+      const [updated] = await tx
+        .update(institutions)
+        .set(updates)
+        .where(eq(institutions.id, institutionId))
+        .returning();
+
+      await tx.insert(activityLogs).values({
+        userId: null,
+        action: "UPDATE",
+        module: "INSTITUTION",
+        recordId: updated.id,
+        description: `Institution ${updated.name} (EIIN: ${updated.eiin}) updated successfully.`,
+        previousData: {
+          name: existingInstitution.name,
+          eiin: existingInstitution.eiin,
+          principal: existingInstitution.principal,
+          principalPhone: existingInstitution.principalPhone,
+          representative: existingInstitution.representative,
+          representativePhone: existingInstitution.representativePhone,
+          division: existingInstitution.division,
+          district: existingInstitution.district,
+          upazila: existingInstitution.upazila,
+          village: existingInstitution.village,
+          block: existingInstitution.block,
+          address: existingInstitution.address,
+        },
+        newData: {
+          name: updated.name,
+          eiin: updated.eiin,
+          principal: updated.principal,
+          principalPhone: updated.principalPhone,
+          representative: updated.representative,
+          representativePhone: updated.representativePhone,
+          division: updated.division,
+          district: updated.district,
+          upazila: updated.upazila,
+          village: updated.village,
+          block: updated.block,
+          address: updated.address,
+        },
+      });
+
+      return updated;
+    });
 
     if (!updatedInstitution) {
       return NextResponse.json(
@@ -180,10 +231,41 @@ export async function DELETE(request: Request, { params }: RouteContext) {
       );
     }
 
-    const [deletedInstitution] = await db
-      .delete(institutions)
-      .where(eq(institutions.id, institutionId))
-      .returning();
+    const deletedInstitution = await db.transaction(async (tx) => {
+      const [deleted] = await tx
+        .delete(institutions)
+        .where(eq(institutions.id, institutionId))
+        .returning();
+
+      if (!deleted) {
+        return null;
+      }
+
+      await tx.insert(activityLogs).values({
+        userId: null,
+        action: "DELETE",
+        module: "INSTITUTION",
+        recordId: deleted.id,
+        description: `Institution ${deleted.name} (EIIN: ${deleted.eiin}) deleted successfully.`,
+        previousData: {
+          name: deleted.name,
+          eiin: deleted.eiin,
+          principal: deleted.principal,
+          principalPhone: deleted.principalPhone,
+          representative: deleted.representative,
+          representativePhone: deleted.representativePhone,
+          division: deleted.division,
+          district: deleted.district,
+          upazila: deleted.upazila,
+          village: deleted.village,
+          block: deleted.block,
+          address: deleted.address,
+        },
+        newData: null,
+      });
+
+      return deleted;
+    });
 
     if (!deletedInstitution) {
       return NextResponse.json(
@@ -191,11 +273,6 @@ export async function DELETE(request: Request, { params }: RouteContext) {
         { status: 404 },
       );
     }
-
-    return NextResponse.json({
-      message: "Institution deleted successfully.",
-      institution: deletedInstitution,
-    });
   } catch (error) {
     console.error("Failed to delete institution:", error);
 

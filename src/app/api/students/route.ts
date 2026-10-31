@@ -5,6 +5,7 @@ import {
   students,
   scholarships,
   scholarshipRegistrations,
+  activityLogs,
 } from "@/lib/db/schema";
 import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
 
@@ -86,9 +87,8 @@ export async function GET(request: Request) {
       .innerJoin(institutions, eq(students.institutionId, institutions.id))
       .leftJoin(scholarships, eq(students.scholarshipId, scholarships.id));
 
-    const allStudents = await (whereClause
-      ? baseQuery.where(whereClause)
-      : baseQuery
+    const allStudents = await (
+      whereClause ? baseQuery.where(whereClause) : baseQuery
     ).orderBy(
       institutionIdParam
         ? sql`${students.class} ASC, ${students.roll} ASC, ${students.studentId} ASC`
@@ -218,6 +218,25 @@ export async function POST(request: Request) {
           scholarshipId: targetScholarshipId,
         })
         .returning();
+
+      // Create activity log
+      await tx.insert(activityLogs).values({
+        userId: null,
+        action: "CREATE",
+        module: "STUDENT",
+        recordId: student.id,
+        description: `Student ${student.name} (${student.studentId}) registered successfully.`,
+        previousData: null,
+        newData: {
+          studentId: student.studentId,
+          name: student.name,
+          institutionId: student.institutionId,
+          scholarshipId: student.scholarshipId,
+          class: student.class,
+          roll: student.roll,
+          registrationId: registration.id,
+        },
+      });
 
       return { student, registration };
     });
