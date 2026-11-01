@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { desc } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { scholarships } from "@/lib/db/schema";
+import { activityLogs, scholarships } from "@/lib/db/schema";
+import { auth } from "../../../../auth";
 
 // GET: সব scholarship দেখা
 export async function GET() {
@@ -25,6 +26,18 @@ export async function GET() {
 // POST: নতুন scholarship তৈরি
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
+
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role ?? "")
+    ) {
+      return NextResponse.json(
+        { message: "You are not authorized to create scholarships." },
+        { status: 403 },
+      );
+    }
+
     const body = await request.json();
 
     const {
@@ -100,6 +113,16 @@ export async function POST(request: NextRequest) {
             : null,
       })
       .returning();
+
+    await db.insert(activityLogs).values({
+      userId: Number(session.user.id),
+      action: "CREATE",
+      module: "SCHOLARSHIP",
+      recordId: newScholarship.id,
+      description: `Created scholarship: ${newScholarship.name}`,
+      previousData: null,
+      newData: newScholarship,
+    });
 
     return NextResponse.json(
       {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { activityLogs, institutions } from "@/lib/db/schema";
+import { auth } from "../../../../../auth";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -44,6 +45,18 @@ export async function GET(request: Request, { params }: RouteContext) {
 
 export async function PATCH(request: Request, { params }: RouteContext) {
   try {
+    const session = await auth();
+
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role ?? "")
+    ) {
+      return NextResponse.json(
+        { message: "You are not authorized to update institutions." },
+        { status: 403 },
+      );
+    }
+
     const { id } = await params;
     const institutionId = Number(id);
 
@@ -163,7 +176,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         .returning();
 
       await tx.insert(activityLogs).values({
-        userId: null,
+        userId: Number(session.user.id),
         action: "UPDATE",
         module: "INSTITUTION",
         recordId: updated.id,
@@ -221,6 +234,18 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 
 export async function DELETE(request: Request, { params }: RouteContext) {
   try {
+    const session = await auth();
+
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role ?? "")
+    ) {
+      return NextResponse.json(
+        { message: "You are not authorized to delete institutions." },
+        { status: 403 },
+      );
+    }
+
     const { id } = await params;
     const institutionId = Number(id);
 
@@ -242,7 +267,7 @@ export async function DELETE(request: Request, { params }: RouteContext) {
       }
 
       await tx.insert(activityLogs).values({
-        userId: null,
+        userId: Number(session.user.id),
         action: "DELETE",
         module: "INSTITUTION",
         recordId: deleted.id,

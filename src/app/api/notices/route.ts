@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { notices } from "@/lib/db/schema";
+import { notices, activityLogs } from "@/lib/db/schema";
 import { auth } from "../../../../auth";
 
 export async function POST(request: Request) {
@@ -48,6 +48,16 @@ export async function POST(request: Request) {
         isPublished: isPublished ?? false,
       })
       .returning();
+
+    await db.insert(activityLogs).values({
+      userId: Number(session.user.id),
+      action: "CREATE",
+      module: "NOTICE",
+      recordId: notice.id,
+      description: `Created notice: ${notice.title}`,
+      previousData: null,
+      newData: notice,
+    });
 
     return NextResponse.json(notice, { status: 201 });
   } catch (error) {

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
-  scholarshipRegistrations,
   students,
   institutions,
   scholarships,

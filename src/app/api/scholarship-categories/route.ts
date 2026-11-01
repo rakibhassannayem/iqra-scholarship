@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { asc, eq, sql } from "drizzle-orm";
 import { auth } from "../../../../auth";
 import { db } from "@/lib/db";
-import { scholarshipCategories, scholarshipGrants } from "@/lib/db/schema";
+import {
+  scholarshipCategories,
+  scholarshipGrants,
+  activityLogs,
+} from "@/lib/db/schema";
 
 export async function GET() {
   try {
@@ -39,8 +43,14 @@ export async function POST(request: Request) {
   try {
     const session = await auth();
 
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role ?? "")
+    ) {
+      return NextResponse.json(
+        { message: "You are not authorized to create scholarship categories." },
+        { status: 403 },
+      );
     }
 
     const body = await request.json();
@@ -83,6 +93,16 @@ export async function POST(request: Request) {
       })
       .returning();
 
+    await db.insert(activityLogs).values({
+      userId: Number(session.user.id),
+      action: "CREATE",
+      module: "SCHOLARSHIP_CATEGORY",
+      recordId: category.id,
+      description: `Created scholarship category: ${category.name}`,
+      previousData: null,
+      newData: category,
+    });
+
     return NextResponse.json(category, { status: 201 });
   } catch (error) {
     console.error("POST scholarship category error:", error);
@@ -98,8 +118,14 @@ export async function PATCH(request: Request) {
   try {
     const session = await auth();
 
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role ?? "")
+    ) {
+      return NextResponse.json(
+        { message: "You are not authorized to update scholarship categories." },
+        { status: 403 },
+      );
     }
 
     const body = await request.json();
@@ -109,6 +135,19 @@ export async function PATCH(request: Request) {
       return NextResponse.json(
         { message: "Valid category ID is required." },
         { status: 400 },
+      );
+    }
+
+    const [existingCategory] = await db
+      .select()
+      .from(scholarshipCategories)
+      .where(eq(scholarshipCategories.id, id))
+      .limit(1);
+
+    if (!existingCategory) {
+      return NextResponse.json(
+        { message: "Category not found." },
+        { status: 404 },
       );
     }
 
@@ -199,6 +238,17 @@ export async function PATCH(request: Request) {
       );
     }
 
+    // Activity Log
+    await db.insert(activityLogs).values({
+      userId: Number(session.user.id),
+      action: "UPDATE",
+      module: "SCHOLARSHIP_CATEGORY",
+      recordId: category.id,
+      description: `Updated scholarship category: ${category.name}`,
+      previousData: existingCategory,
+      newData: category,
+    });
+
     return NextResponse.json(category);
   } catch (error) {
     console.error("PATCH scholarship category error:", error);
@@ -214,8 +264,14 @@ export async function DELETE(request: Request) {
   try {
     const session = await auth();
 
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role ?? "")
+    ) {
+      return NextResponse.json(
+        { message: "You are not authorized to delete scholarship categories." },
+        { status: 403 },
+      );
     }
 
     const id = Number(new URL(request.url).searchParams.get("id"));
@@ -247,7 +303,7 @@ export async function DELETE(request: Request) {
     const [deletedCategory] = await db
       .delete(scholarshipCategories)
       .where(eq(scholarshipCategories.id, id))
-      .returning({ id: scholarshipCategories.id });
+      .returning();
 
     if (!deletedCategory) {
       return NextResponse.json(
@@ -255,6 +311,17 @@ export async function DELETE(request: Request) {
         { status: 404 },
       );
     }
+
+    // Activity Log
+    await db.insert(activityLogs).values({
+      userId: Number(session.user.id),
+      action: "DELETE",
+      module: "SCHOLARSHIP_CATEGORY",
+      recordId: deletedCategory.id,
+      description: `Deleted scholarship category: ${deletedCategory.name}`,
+      previousData: deletedCategory,
+      newData: null,
+    });
 
     return NextResponse.json({
       message: "Category deleted successfully.",

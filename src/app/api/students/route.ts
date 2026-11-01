@@ -7,7 +7,8 @@ import {
   scholarshipRegistrations,
   activityLogs,
 } from "@/lib/db/schema";
-import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { auth } from "../../../../auth";
 
 function convertBengaliDigitsToEnglish(input: string): string {
   const banglaDigits: Record<string, string> = {
@@ -108,6 +109,10 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const session = await auth();
+
+    const userId = session?.user ? Number(session.user.id) : null;
+
     const body = await request.json();
     const {
       name,
@@ -221,7 +226,7 @@ export async function POST(request: Request) {
 
       // Create activity log
       await tx.insert(activityLogs).values({
-        userId: null,
+        userId,
         action: "CREATE",
         module: "STUDENT",
         recordId: student.id,

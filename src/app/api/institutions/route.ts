@@ -2,9 +2,22 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { institutions, activityLogs } from "@/lib/db/schema";
 import { asc } from "drizzle-orm";
+import { auth } from "../../../../auth";
 
 export async function POST(request: Request) {
   try {
+    const session = await auth();
+
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role ?? "")
+    ) {
+      return NextResponse.json(
+        { message: "You are not authorized to create institutions." },
+        { status: 403 },
+      );
+    }
+
     const body = await request.json();
 
     const {
@@ -59,7 +72,7 @@ export async function POST(request: Request) {
         .returning();
 
       await tx.insert(activityLogs).values({
-        userId: null,
+        userId: Number(session.user.id),
         action: "CREATE",
         module: "INSTITUTION",
         recordId: createdInstitution.id,

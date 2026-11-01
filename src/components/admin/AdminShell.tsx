@@ -7,7 +7,6 @@ import {
   GraduationCap,
   ChartColumnStacked,
   School,
-  UserGroup,
   ClipboardPenLine,
   Menu,
   X,
@@ -15,6 +14,7 @@ import {
   Trophy,
   Megaphone,
   UserShield,
+  History
 } from "lucide-react";
 import { useState } from "react";
 import SignOutButton from "./SignOutButton";
@@ -65,6 +65,11 @@ const navigation = [
     title: "Users",
     href: "/admin/users",
     icon: UserShield,
+  },
+  {
+    title: "Activity History",
+    href: "/admin/activity-history",
+    icon: History,
   },
 ];
 

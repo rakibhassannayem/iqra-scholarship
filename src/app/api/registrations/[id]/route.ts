@@ -22,7 +22,7 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
     const [deletedRegistration] = await db
       .delete(scholarshipRegistrations)
       .where(eq(scholarshipRegistrations.id, registrationId))
-      .returning({ id: scholarshipRegistrations.id });
+      .returning();
 
     if (!deletedRegistration) {
       return NextResponse.json(

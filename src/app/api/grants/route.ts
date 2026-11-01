@@ -8,7 +8,7 @@ import {
   institutions,
   scholarships,
   scholarshipCategories,
-  scholarshipRegistrations,
+  activityLogs,
 } from "@/lib/db/schema";
 
 export async function GET() {
@@ -70,8 +70,14 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role ?? "")
+    ) {
+      return NextResponse.json(
+        { message: "You are not authorized to grant scholarships." },
+        { status: 403 },
+      );
     }
 
     const body = await request.json();
@@ -179,6 +185,17 @@ export async function POST(request: NextRequest) {
         status: "granted",
       })
       .returning();
+
+    // Activity Log
+    await db.insert(activityLogs).values({
+      userId: Number(session.user.id),
+      action: "CREATE",
+      module: "SCHOLARSHIP_GRANT",
+      recordId: grant.id,
+      description: `Granted scholarship to student ID: ${grant.studentId}`,
+      previousData: null,
+      newData: grant,
+    });
 
     return NextResponse.json(
       {

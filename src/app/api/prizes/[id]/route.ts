@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { auth } from "../../../../../auth";
 import { db } from "@/lib/db";
-import { scholarshipGrants } from "@/lib/db/schema";
+import { scholarshipGrants, activityLogs } from "@/lib/db/schema";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -12,8 +12,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   try {
     const session = await auth();
 
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role ?? "")
+    ) {
+      return NextResponse.json(
+        { message: "You are not authorized to update prize status." },
+        { status: 403 },
+      );
     }
 
     const { id } = await params;
@@ -37,7 +43,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     }
 
     const [existingGrant] = await db
-      .select({ id: scholarshipGrants.id, status: scholarshipGrants.status })
+      .select()
       .from(scholarshipGrants)
       .where(eq(scholarshipGrants.id, grantId))
       .limit(1);
@@ -59,9 +65,9 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       : null;
 
     const staffName = isReceived
-      ? (typeof confirmedBy === "string" && confirmedBy.trim()
-          ? confirmedBy.trim()
-          : session.user.name || session.user.email || "Staff Member")
+      ? typeof confirmedBy === "string" && confirmedBy.trim()
+        ? confirmedBy.trim()
+        : session.user.name || session.user.email || "Staff Member"
       : null;
 
     const notes = typeof prizeNotes === "string" ? prizeNotes.trim() : null;
@@ -77,6 +83,20 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       })
       .where(eq(scholarshipGrants.id, grantId))
       .returning();
+
+    // Activity Log
+    await db.insert(activityLogs).values({
+      userId: Number(session.user.id),
+      action: "UPDATE",
+      module: "PRIZE",
+      recordId: updatedGrant.id,
+      description:
+        updatedGrant.prizeStatus === "received"
+          ? `Prize receipt confirmed for student grant ID: ${updatedGrant.id}`
+          : `Prize status reverted to pending for grant ID: ${updatedGrant.id}`,
+      previousData: existingGrant,
+      newData: updatedGrant,
+    });
 
     return NextResponse.json({
       message: isReceived

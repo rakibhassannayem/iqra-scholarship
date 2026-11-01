@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { auth } from "../../../../../auth";
 import { db } from "@/lib/db";
-import { scholarshipGrants, scholarshipCategories } from "@/lib/db/schema";
+import {
+  scholarshipGrants,
+  scholarshipCategories,
+  activityLogs,
+} from "@/lib/db/schema";
 
 export async function PATCH(
   request: NextRequest,
@@ -11,8 +15,14 @@ export async function PATCH(
   try {
     const session = await auth();
 
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role ?? "")
+    ) {
+      return NextResponse.json(
+        { message: "You are not authorized to update scholarship grants." },
+        { status: 403 },
+      );
     }
 
     const { id } = await params;
@@ -22,6 +32,19 @@ export async function PATCH(
       return NextResponse.json(
         { message: "Invalid grant ID." },
         { status: 400 },
+      );
+    }
+
+    const [existingGrant] = await db
+      .select()
+      .from(scholarshipGrants)
+      .where(eq(scholarshipGrants.id, grantId))
+      .limit(1);
+
+    if (!existingGrant) {
+      return NextResponse.json(
+        { message: "Grant not found." },
+        { status: 404 },
       );
     }
 
@@ -85,6 +108,17 @@ export async function PATCH(
       );
     }
 
+    // Activity Log
+    await db.insert(activityLogs).values({
+      userId: Number(session.user.id),
+      action: "UPDATE",
+      module: "SCHOLARSHIP_GRANT",
+      recordId: updatedGrant.id,
+      description: `Updated scholarship grant for student ID: ${updatedGrant.studentId}`,
+      previousData: existingGrant,
+      newData: updatedGrant,
+    });
+
     return NextResponse.json({
       message: "Scholarship grant updated successfully.",
       grant: updatedGrant,
@@ -106,8 +140,14 @@ export async function DELETE(
   try {
     const session = await auth();
 
-    if (!session?.user) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role ?? "")
+    ) {
+      return NextResponse.json(
+        { message: "You are not authorized to delete scholarship grants." },
+        { status: 403 },
+      );
     }
 
     const { id } = await params;
@@ -131,6 +171,17 @@ export async function DELETE(
         { status: 404 },
       );
     }
+
+    // Activity Log
+    await db.insert(activityLogs).values({
+      userId: Number(session.user.id),
+      action: "DELETE",
+      module: "SCHOLARSHIP_GRANT",
+      recordId: deletedGrant.id,
+      description: `Deleted scholarship grant for student ID: ${deletedGrant.studentId}`,
+      previousData: deletedGrant,
+      newData: null,
+    });
 
     return NextResponse.json({
       message: "Scholarship grant deleted successfully.",

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { scholarships } from "@/lib/db/schema";
+import { activityLogs, scholarships } from "@/lib/db/schema";
+import { auth } from "../../../../../auth";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -58,6 +59,18 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 // PATCH: নির্দিষ্ট scholarship update করা
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
+    const session = await auth();
+
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role ?? "")
+    ) {
+      return NextResponse.json(
+        { message: "You are not authorized to update scholarships." },
+        { status: 403 },
+      );
+    }
+
     const id = await getScholarshipId(context);
 
     if (id === null) {
@@ -212,6 +225,16 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       updatedScholarship = updated;
     }
 
+    await db.insert(activityLogs).values({
+      userId: Number(session.user.id),
+      action: "UPDATE",
+      module: "SCHOLARSHIP",
+      recordId: updatedScholarship.id,
+      description: `Updated scholarship: ${updatedScholarship.name}`,
+      previousData: existingScholarship,
+      newData: updatedScholarship,
+    });
+
     return NextResponse.json({
       message: "Scholarship updated successfully",
       scholarship: updatedScholarship,
@@ -229,6 +252,18 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 // DELETE: নির্দিষ্ট scholarship delete করা
 export async function DELETE(_request: NextRequest, context: RouteContext) {
   try {
+    const session = await auth();
+
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role ?? "")
+    ) {
+      return NextResponse.json(
+        { message: "You are not authorized to delete scholarships." },
+        { status: 403 },
+      );
+    }
+
     const id = await getScholarshipId(context);
 
     if (id === null) {
@@ -249,6 +284,17 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
         { status: 404 },
       );
     }
+
+    // Activity Log
+    await db.insert(activityLogs).values({
+      userId: Number(session.user.id),
+      action: "DELETE",
+      module: "SCHOLARSHIP",
+      recordId: deletedScholarship.id,
+      description: `Deleted scholarship: ${deletedScholarship.name}`,
+      previousData: deletedScholarship,
+      newData: null,
+    });
 
     return NextResponse.json({
       message: "Scholarship deleted successfully",

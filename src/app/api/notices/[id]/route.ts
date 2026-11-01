@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { notices } from "@/lib/db/schema";
+import { notices, activityLogs } from "@/lib/db/schema";
 import { auth } from "../../../../../auth";
 
 type RouteContext = {
@@ -105,6 +105,19 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
+    const [existingNotice] = await db
+      .select()
+      .from(notices)
+      .where(eq(notices.id, id))
+      .limit(1);
+
+    if (!existingNotice) {
+      return NextResponse.json(
+        { message: "Notice not found." },
+        { status: 404 },
+      );
+    }
+
     const updates: {
       title?: string;
       content?: string;
@@ -130,6 +143,16 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
+    await db.insert(activityLogs).values({
+      userId: Number(session.user.id),
+      action: "UPDATE",
+      module: "NOTICE",
+      recordId: updatedNotice.id,
+      description: `Updated notice: ${updatedNotice.title}`,
+      previousData: existingNotice,
+      newData: updatedNotice,
+    });
+
     return NextResponse.json({
       message: "Notice updated successfully.",
       notice: updatedNotice,
@@ -147,9 +170,18 @@ export async function PATCH(request: Request, context: RouteContext) {
 // DELETE: notice delete করা
 export async function DELETE(_request: Request, context: RouteContext) {
   try {
-    {
-      message: "You are not authorized to delete notices.";
+    const session = await auth();
+
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role ?? "")
+    ) {
+      return NextResponse.json(
+        { message: "You are not authorized to delete notices." },
+        { status: 403 },
+      );
     }
+
     const id = await getNoticeId(context);
 
     if (id === null) {
@@ -170,6 +202,16 @@ export async function DELETE(_request: Request, context: RouteContext) {
         { status: 404 },
       );
     }
+
+    await db.insert(activityLogs).values({
+      userId: Number(session.user.id),
+      action: "DELETE",
+      module: "NOTICE",
+      recordId: deletedNotice.id,
+      description: `Deleted notice: ${deletedNotice.title}`,
+      previousData: deletedNotice,
+      newData: null,
+    });
 
     return NextResponse.json({
       message: "Notice deleted successfully.",

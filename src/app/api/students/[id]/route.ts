@@ -8,6 +8,7 @@ import {
   activityLogs,
 } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { auth } from "../../../../../auth";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -67,6 +68,17 @@ export async function GET(_request: Request, { params }: RouteContext) {
 // PATCH: Update a student
 export async function PATCH(request: Request, { params }: RouteContext) {
   try {
+    const session = await auth();
+
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role)
+    ) {
+      return NextResponse.json({ message: "Unauthorized." }, { status: 403 });
+    }
+
+    const userId = Number(session.user.id);
+
     const { id } = await params;
     const studentId = Number(id);
 
@@ -161,7 +173,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         .returning();
 
       await tx.insert(activityLogs).values({
-        userId: null,
+        userId,
         action: "UPDATE",
         module: "STUDENT",
         recordId: student.id,
@@ -203,6 +215,17 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 // DELETE: Delete a student and associated registrations
 export async function DELETE(_request: Request, { params }: RouteContext) {
   try {
+    const session = await auth();
+
+    if (
+      !session?.user ||
+      !["admin", "superadmin"].includes(session.user.role)
+    ) {
+      return NextResponse.json({ message: "Unauthorized." }, { status: 403 });
+    }
+
+    const userId = Number(session.user.id);
+
     const { id } = await params;
     const studentId = Number(id);
 
@@ -228,7 +251,7 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
       }
 
       await tx.insert(activityLogs).values({
-        userId: null,
+        userId,
         action: "DELETE",
         module: "STUDENT",
         recordId: deletedStudent.id,
