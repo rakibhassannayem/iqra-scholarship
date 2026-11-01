@@ -33,7 +33,7 @@ export default function ContactInfo() {
   ];
 
   return (
-    <section className="bg-background py-16 sm:py-20">
+    <section className="py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4">
         <div className="mx-auto mb-12 max-w-2xl text-center">
           <p className="mb-3 text-sm font-semibold tracking-wide text-primary">

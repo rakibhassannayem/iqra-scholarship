@@ -16,7 +16,7 @@ export default function ContactForm() {
   }
 
   return (
-    <section className="bg-secondary/40 py-16 sm:py-20">
+    <section className="py-16 sm:py-20">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 lg:grid-cols-2 lg:gap-16">
         <div className="flex flex-col justify-center">
           <p className="mb-3 text-sm font-semibold tracking-wide text-primary">

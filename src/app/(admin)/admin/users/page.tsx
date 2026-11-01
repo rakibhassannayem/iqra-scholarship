@@ -18,9 +18,11 @@ import UserForm, {
   type UserFormValues,
 } from "@/components/admin/users/UserForm";
 import UserTable, { type User } from "@/components/admin/users/UserTable";
+import { getSession } from "next-auth/react";
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [userRole, setUserRole] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -57,6 +59,15 @@ export default function UsersPage() {
   useEffect(() => {
     void fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const session = await getSession();
+      setUserRole(session?.user?.role ?? "");
+    };
+
+    void fetchUserRole();
+  }, []);
 
   function openCreateForm() {
     setEditingUser(null);
@@ -184,6 +195,7 @@ export default function UsersPage() {
       <UserTable
         users={users}
         loading={loading}
+        role={userRole}
         onEdit={openEditForm}
         onDelete={(user) => {
           setDeleteError("");
@@ -198,11 +210,11 @@ export default function UsersPage() {
         initialValues={
           editingUser
             ? {
-              name: editingUser.name,
-              email: editingUser.email,
-              password: "",
-              role: editingUser.role,
-            }
+                name: editingUser.name,
+                email: editingUser.email,
+                password: "",
+                role: editingUser.role,
+              }
             : emptyUserForm
         }
         editing={editingUser !== null}

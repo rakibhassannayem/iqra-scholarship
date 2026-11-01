@@ -150,7 +150,7 @@ export default function GrantTable({
             <p className="text-xs text-muted-foreground font-medium">
               Granted Students (প্রাপ্ত শিক্ষার্থী)
             </p>
-            <p className="text-2xl font-bold">{grants.length}</p>
+            <p className="text-2xl font-bold text-center">{grants.length}</p>
           </div>
         </Card>
 
@@ -162,7 +162,7 @@ export default function GrantTable({
             <p className="text-xs text-muted-foreground font-medium">
               Prizes Distributed (বিতরণকৃত পুরস্কার)
             </p>
-            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 text-center">
               {prizesDistributed}
             </p>
           </div>
@@ -176,7 +176,7 @@ export default function GrantTable({
             <p className="text-xs text-muted-foreground font-medium">
               Institutions (প্রতিষ্ঠান)
             </p>
-            <p className="text-2xl font-bold">{uniqueInstitutions}</p>
+            <p className="text-2xl font-bold text-center">{uniqueInstitutions}</p>
           </div>
         </Card>
       </div>

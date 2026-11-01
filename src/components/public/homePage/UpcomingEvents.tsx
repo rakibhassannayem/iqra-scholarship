@@ -30,7 +30,7 @@ export default function UpcomingEvents() {
   ];
 
   return (
-    <section className="bg-secondary/40 py-16 sm:py-20">
+    <section className="py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4">
         <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
           <div>

@@ -127,9 +127,22 @@ export default function StudentForm({
   }, [open, initialValues]);
 
   function handleChange(field: keyof StudentFormValues, value: string) {
+    if (field === "name") {
+      setForm((previous) => ({
+        ...previous,
+        name: value,
+      }));
+      return;
+    }
+
+    // Convert Bangla digits to English digits
+    const normalizedValue = value.replace(/[০-৯]/g, (digit) =>
+      String(digit.charCodeAt(0) - 0x09e6),
+    );
+
     setForm((previous) => ({
       ...previous,
-      [field]: field === "name" ? value : Number(value),
+      [field]: Number(normalizedValue),
     }));
   }
 
@@ -170,7 +183,9 @@ export default function StudentForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="student-institution">Institution / Madrasa / School *</Label>
+            <Label htmlFor="student-institution">
+              Institution / Madrasa / School *
+            </Label>
             <select
               id="student-institution"
               value={form.institutionId || ""}
@@ -238,10 +253,8 @@ export default function StudentForm({
               <Label htmlFor="student-roll">Roll Number *</Label>
               <Input
                 id="student-roll"
-                type="number"
-                min={1}
-                step={1}
-                value={form.roll}
+                type="text"
+                value={form.roll || ""}
                 onChange={(event) => handleChange("roll", event.target.value)}
                 placeholder="e.g. 15"
                 required
@@ -249,7 +262,9 @@ export default function StudentForm({
             </div>
           </div>
 
-          {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+          {error && (
+            <p className="text-sm font-medium text-destructive">{error}</p>
+          )}
 
           <div className="flex justify-end gap-2 border-t pt-4">
             <Button

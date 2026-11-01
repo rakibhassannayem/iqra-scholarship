@@ -188,3 +188,13 @@ export const activityLogs = pgTable("activity_logs", {
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+
+  key: varchar("key", { length: 100 }).notNull().unique(),
+
+  value: varchar("value", { length: 1000 }).notNull(),
+
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});

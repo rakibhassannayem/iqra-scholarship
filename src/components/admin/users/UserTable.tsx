@@ -24,6 +24,7 @@ export type User = {
 type UserTableProps = {
   users: User[];
   loading: boolean;
+  role: string;
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
 };
@@ -39,6 +40,7 @@ function formatDate(date: string) {
 export default function UserTable({
   users,
   loading,
+  role,
   onEdit,
   onDelete,
 }: UserTableProps) {
@@ -101,25 +103,27 @@ export default function UserTable({
 
                   <TableCell>
                     <div className="flex justify-end gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        aria-label={`Edit ${user.name}`}
-                        onClick={() => onEdit(user)}
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
+                      {role === "superadmin" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onEdit(user)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
 
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        aria-label={`Delete ${user.name}`}
-                        onClick={() => onDelete(user)}
-                      >
-                        <Trash2 className="size-4 text-destructive" />
-                      </Button>
+                      {role === "superadmin" && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          aria-label={`Delete ${user.name}`}
+                          onClick={() => onDelete(user)}
+                        >
+                          <Trash2 className="size-4 text-destructive" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

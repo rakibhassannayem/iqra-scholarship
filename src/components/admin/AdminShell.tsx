@@ -14,7 +14,8 @@ import {
   Trophy,
   Megaphone,
   UserShield,
-  History
+  History,
+  Settings,
 } from "lucide-react";
 import { useState } from "react";
 import SignOutButton from "./SignOutButton";
@@ -70,6 +71,11 @@ const navigation = [
     title: "Activity History",
     href: "/admin/activity-history",
     icon: History,
+  },
+  {
+    title: "Settings",
+    href: "/admin/settings",
+    icon: Settings,
   },
 ];
 
@@ -130,7 +136,7 @@ export default function AdminShell({
           </p>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3">
+        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-4">
           {navigation.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -191,8 +197,11 @@ export default function AdminShell({
             </div>
           </div>
 
-          <div className="rounded-full border bg-card px-3 py-1.5 text-sm font-medium">
+          <div className="flex flex-col items-center rounded-full text-sm font-medium text-center">
             {session?.user?.name ?? "AdminName"}
+            <span className="text-xs text-muted-foreground">
+              {session?.user?.role}
+            </span>
           </div>
         </header>
 

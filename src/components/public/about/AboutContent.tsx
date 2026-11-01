@@ -33,7 +33,7 @@ export default function AboutContent() {
   ];
 
   return (
-    <section className="bg-background py-16 sm:py-24">
+    <section className="py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4">
         <div className="mx-auto mb-12 max-w-3xl text-center">
           <p className="mb-3 text-sm font-semibold tracking-wide text-primary">

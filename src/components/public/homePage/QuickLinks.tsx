@@ -50,7 +50,7 @@ export default function QuickLinks() {
   ];
 
   return (
-    <section className="bg-background py-16 sm:py-20">
+    <section className="py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4">
         <div className="mb-10 text-center">
           <p className="mb-3 text-sm font-semibold tracking-wide text-primary">

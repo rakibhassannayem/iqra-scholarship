@@ -9,12 +9,12 @@ export default function Navbar() {
 
   const navLinks = [
     { label: t("home"), href: "/" },
-    { label: t("about"), href: "/about" },
-    { label: t("notice"), href: "/notices" },
-    { label: t("contact"), href: "/contact" },
     { label: t("register"), href: "/register" },
     { label: t("downloadAdmit"), href: "/download-admit" },
     { label: t("result"), href: "/result" },
+    { label: t("notice"), href: "/notices" },
+    { label: t("contact"), href: "/contact" },
+    { label: t("about"), href: "/about" },
   ];
 
   return (

@@ -5,7 +5,7 @@ import ContactInfo from "@/components/public/contact/ContactInfo";
 export default function ContactPage() {
   return (
     <>
-      <ContactHero />
+      
       <ContactInfo />
       <ContactForm />
     </>

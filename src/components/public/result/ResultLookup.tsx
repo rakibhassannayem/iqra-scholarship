@@ -298,7 +298,7 @@ export default function ResultLookup() {
 
   // ── Render ───────────────────────────────────────────────────────────
   return (
-    <section className="bg-background px-4 py-16 sm:py-20">
+    <section className="px-4 py-16 sm:py-20">
       <div className="mx-auto max-w-4xl space-y-8">
 
         {/* ── Card 1: Search by Student ID ─────────────────────────── */}

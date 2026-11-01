@@ -258,7 +258,6 @@ export default function RegisterForm() {
     );
   }
 
-  // ✅ After successful registration — show the Admit Card
   if (admitCardData) {
     return (
       <section className="bg-background px-4 py-12 sm:py-16">
@@ -270,7 +269,7 @@ export default function RegisterForm() {
   }
 
   return (
-    <section className="bg-background px-4 py-16 sm:py-20">
+    <section className="x-4 py-16 sm:py-20">
       <div className="mx-auto max-w-3xl">
         <div className="rounded-2xl border bg-card p-5 shadow-sm sm:p-8">
           <div className="mb-7 flex items-start gap-4">

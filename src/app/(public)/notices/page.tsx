@@ -4,9 +4,7 @@ import NoticeTable from "@/components/public/notices/NoticeTable";
 export default function NoticePage() {
   return (
     <>
-      <NoticeHero />
-
-      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+      <section className="mx-auto max-w-7xl px-25 py-16 sm:py-20 lg:py-24">
         <NoticeTable />
       </section>
     </>
