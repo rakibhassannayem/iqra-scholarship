@@ -51,7 +51,8 @@ export const scholarships = pgTable("scholarships", {
   description: varchar("description", { length: 2000 }).notNull(),
   academicYear: varchar("academic_year", { length: 20 }).notNull(),
   endDate: timestamp("end_date").notNull(),
-  eligibility: varchar("eligibility", { length: 2000 }).notNull(),
+  eligibilityClass: integer("eligibility_class").notNull(),
+  registrationFee: integer("registration_fee").notNull(),
   isActive: boolean("is_active").notNull().default(false),
 
   // Exam info for admit card

@@ -140,15 +140,32 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       updates.endDate = date;
     }
 
-    if (body.eligibility !== undefined) {
-      if (typeof body.eligibility !== "string" || !body.eligibility.trim()) {
+    // Eligibility class: 1 থেকে 10-এর মধ্যে integer
+    if (body.eligibilityClass !== undefined) {
+      if (
+        !Number.isInteger(body.eligibilityClass) ||
+        body.eligibilityClass < 1 ||
+        body.eligibilityClass > 10
+      ) {
         return NextResponse.json(
-          { message: "Eligibility cannot be empty" },
+          { message: "Eligibility class must be between 1 and 10" },
           { status: 400 },
         );
       }
 
-      updates.eligibility = body.eligibility.trim();
+      updates.eligibilityClass = body.eligibilityClass;
+    }
+
+    // Registration fee: non-negative integer
+    if (body.registrationFee !== undefined) {
+      if (!Number.isInteger(body.registrationFee) || body.registrationFee < 0) {
+        return NextResponse.json(
+          { message: "Registration fee must be a non-negative integer" },
+          { status: 400 },
+        );
+      }
+
+      updates.registrationFee = body.registrationFee;
     }
 
     if (body.isActive !== undefined) {

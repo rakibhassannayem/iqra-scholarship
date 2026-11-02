@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
       description,
       academicYear,
       endDate,
-      eligibility,
+      eligibilityClass,
+      registrationFee,
       examCenter,
       examDate,
       examTime,
@@ -60,15 +61,33 @@ export async function POST(request: NextRequest) {
       !description.trim() ||
       typeof academicYear !== "string" ||
       !academicYear.trim() ||
-      !endDate ||
-      typeof eligibility !== "string" ||
-      !eligibility.trim()
+      !endDate
     ) {
       return NextResponse.json(
         {
           message:
             "Please provide all required scholarship fields with valid values",
         },
+        { status: 400 },
+      );
+    }
+
+    // Eligibility class অবশ্যই 1 থেকে 10-এর মধ্যে integer হতে হবে
+    if (
+      !Number.isInteger(eligibilityClass) ||
+      eligibilityClass < 1 ||
+      eligibilityClass > 10
+    ) {
+      return NextResponse.json(
+        { message: "Eligibility class must be between 1 and 10" },
+        { status: 400 },
+      );
+    }
+
+    // Registration fee অবশ্যই non-negative integer হতে হবে
+    if (!Number.isInteger(registrationFee) || registrationFee < 0) {
+      return NextResponse.json(
+        { message: "Registration fee must be a non-negative integer" },
         { status: 400 },
       );
     }
@@ -89,7 +108,8 @@ export async function POST(request: NextRequest) {
         description: description.trim(),
         academicYear: academicYear.trim(),
         endDate: parsedEndDate,
-        eligibility: eligibility.trim(),
+        eligibilityClass,
+        registrationFee,
         isActive: false,
         examCenter:
           typeof examCenter === "string" && examCenter.trim()

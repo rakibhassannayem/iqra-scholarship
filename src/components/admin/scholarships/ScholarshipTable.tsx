@@ -21,7 +21,8 @@ export type Scholarship = {
   description: string;
   academicYear: string;
   endDate: string;
-  eligibility: string;
+  eligibilityClass: number;
+  registrationFee: number;
   isActive: boolean;
   examCenter: string | null;
   examDate: string | null;
@@ -102,6 +103,8 @@ export default function ScholarshipTable({
               <TableRow>
                 <TableHead>Scholarship</TableHead>
                 <TableHead>Academic Year</TableHead>
+                <TableHead>Class</TableHead>
+                <TableHead>Registration Fee</TableHead>
                 <TableHead>Registration Deadline</TableHead>
                 <TableHead>
                   <div className="flex flex-col">
@@ -132,6 +135,16 @@ export default function ScholarshipTable({
                       <Badge variant="secondary" className="font-normal">
                         {scholarship.academicYear}
                       </Badge>
+                    </TableCell>
+
+                    <TableCell>
+                      <Badge variant="outline">
+                        Class {scholarship.eligibilityClass}
+                      </Badge>
+                    </TableCell>
+
+                    <TableCell className="whitespace-nowrap font-medium">
+                      ৳{scholarship.registrationFee.toLocaleString("en-BD")}
                     </TableCell>
 
                     <TableCell className="whitespace-nowrap">

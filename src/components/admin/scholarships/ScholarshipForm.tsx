@@ -18,7 +18,8 @@ export type ScholarshipFormValues = {
   description: string;
   academicYear: string;
   endDate: string;
-  eligibility: string;
+  eligibilityClass: number;
+  registrationFee: number;
   examCenter: string;
   examDate: string;
   examTime: string;
@@ -36,12 +37,22 @@ type ScholarshipFormProps = {
   onSubmit: (values: ScholarshipFormValues) => void;
 };
 
+function convertToEnglishDigits(value: string) {
+  const banglaDigits = "০১২৩৪৫৬৭৮৯";
+  const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
+
+  return value
+    .replace(/[০-৯]/g, (digit) => String(banglaDigits.indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String(arabicDigits.indexOf(digit)));
+}
+
 export const emptyScholarshipForm: ScholarshipFormValues = {
   name: "",
   description: "",
   academicYear: "",
   endDate: "",
-  eligibility: "",
+  eligibilityClass: 1,
+  registrationFee: 0,
   examCenter: "",
   examDate: "",
   examTime: "",
@@ -129,7 +140,10 @@ export default function ScholarshipForm({
       description: String(formData.get("description") ?? ""),
       academicYear: String(formData.get("academicYear") ?? ""),
       endDate: String(formData.get("endDate") ?? ""),
-      eligibility: String(formData.get("eligibility") ?? ""),
+      eligibilityClass: Number(formData.get("eligibilityClass")),
+      registrationFee: Number(
+        convertToEnglishDigits(String(formData.get("registrationFee") ?? "")),
+      ),
       examCenter: String(formData.get("examCenter") ?? ""),
       examDate: String(formData.get("examDate") ?? ""),
       examTime: `${examStartTime} হতে ${examEndTime}`,
@@ -185,6 +199,38 @@ export default function ScholarshipForm({
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="eligibilityClass">Eligibility Class</Label>
+              <select
+                id="eligibilityClass"
+                name="eligibilityClass"
+                required
+                defaultValue={String(initialValues.eligibilityClass)}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                {Array.from({ length: 10 }, (_, index) => index + 1).map(
+                  (classNumber) => (
+                    <option key={classNumber} value={classNumber}>
+                      Class {classNumber}
+                    </option>
+                  ),
+                )}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="registrationFee">Registration Fee (৳)</Label>
+              <Input
+                id="registrationFee"
+                name="registrationFee"
+                type="text"
+                inputMode="numeric"
+                required
+                defaultValue={initialValues.registrationFee}
+                placeholder="১০০"
+              />
+            </div>
+
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
@@ -196,28 +242,17 @@ export default function ScholarshipForm({
                 placeholder="Scholarship সম্পর্কে বিবরণ"
               />
             </div>
-
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="eligibility">Eligibility</Label>
-              <Textarea
-                id="eligibility"
-                name="eligibility"
-                required
-                maxLength={2000}
-                defaultValue={initialValues.eligibility}
-                placeholder="কারা আবেদন করতে পারবে (যোগ্যতা)"
-              />
-            </div>
           </div>
 
           {/* Exam info section for Admit Card */}
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+          <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
             <div className="flex items-center gap-2">
               <div className="size-2 rounded-full bg-primary" />
-              <h4 className="font-semibold text-sm">
+              <h4 className="text-sm font-semibold">
                 Admit Card-এর জন্য পরীক্ষার তথ্য (আবশ্যক)
               </h4>
             </div>
+
             <p className="text-xs text-muted-foreground">
               এই ফিল্ডগুলো পূরণ করলে রেজিস্ট্রেশন শেষে শিক্ষার্থীর প্রবেশপত্রে
               (Admit Card) পরীক্ষার কেন্দ্র, তারিখ ও সময় সরাসরি প্রদর্শিত হবে।
@@ -255,6 +290,7 @@ export default function ScholarshipForm({
                   <p className="text-xs text-muted-foreground">
                     Start Time — শুরুর সময়
                   </p>
+
                   <div className="grid grid-cols-3 gap-2">
                     <select
                       required
@@ -310,6 +346,7 @@ export default function ScholarshipForm({
                   <p className="text-xs text-muted-foreground">
                     End Time — শেষের সময়
                   </p>
+
                   <div className="grid grid-cols-3 gap-2">
                     <select
                       required
