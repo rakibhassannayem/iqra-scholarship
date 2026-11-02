@@ -5,13 +5,14 @@ import {
   students,
   institutions,
   scholarships,
+  scholarshipRegistrations,
 } from "@/lib/db/schema";
 
 export async function GET() {
   try {
     const registrations = await db
       .select({
-        id: students.id,
+        id: scholarshipRegistrations.id,
         studentDbId: students.id,
         studentId: students.studentId,
         studentName: students.name,
@@ -20,15 +21,19 @@ export async function GET() {
         institutionName: institutions.name,
         scholarshipId: scholarships.id,
         scholarshipName: scholarships.name,
-        registeredAt: students.createdAt,
+        registrationFee: scholarshipRegistrations.registrationFee,
+        status: scholarshipRegistrations.status,
+        paymentStatus: scholarshipRegistrations.paymentStatus,
+        registeredAt: scholarshipRegistrations.registeredAt,
       })
-      .from(students)
+      .from(scholarshipRegistrations)
+      .innerJoin(students, eq(scholarshipRegistrations.studentId, students.id))
       .innerJoin(institutions, eq(students.institutionId, institutions.id))
       .innerJoin(
         scholarships,
-        eq(students.scholarshipId, scholarships.id),
+        eq(scholarshipRegistrations.scholarshipId, scholarships.id),
       )
-      .orderBy(desc(students.createdAt));
+      .orderBy(desc(scholarshipRegistrations.registeredAt));
 
     return NextResponse.json(registrations);
   } catch (error) {

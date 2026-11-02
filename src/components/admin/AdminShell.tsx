@@ -44,7 +44,7 @@ const navigation = [
   },
   {
     title: "Student Registrations",
-    href: "/admin/students",
+    href: "/admin/registrations",
     icon: ClipboardPenLine,
   },
   {

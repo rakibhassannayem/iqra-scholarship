@@ -200,6 +200,15 @@ export async function POST(request: Request) {
       targetScholarship = activeScholarship;
     }
 
+    if (parsedClass !== targetScholarship.eligibilityClass) {
+      return NextResponse.json(
+        {
+          message: `This scholarship is only available for Class ${targetScholarship.eligibilityClass}.`,
+        },
+        { status: 400 },
+      );
+    }
+
     const year = String(new Date().getFullYear()).slice(-2);
     const studentId = `${year}${institution.eiin}${parsedClass}${parsedRoll}`;
 
@@ -221,6 +230,7 @@ export async function POST(request: Request) {
         .values({
           studentId: student.id,
           scholarshipId: targetScholarshipId,
+          registrationFee: targetScholarship.registrationFee,
         })
         .returning();
 

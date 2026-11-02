@@ -99,6 +99,13 @@
       "when": 1793598744241,
       "tag": "0013_nasty_doctor_spectrum",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793601625162,
+      "tag": "0014_lush_vulcan",
+      "breakpoints": true
     }
   ]
 }

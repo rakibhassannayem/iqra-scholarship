@@ -14,7 +14,6 @@ import {
   GraduationCap,
   School,
   Calendar,
-  Hash,
   User,
   Copy,
   Check,

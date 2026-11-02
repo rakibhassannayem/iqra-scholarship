@@ -141,6 +141,14 @@ export const scholarshipRegistrations = pgTable(
       .notNull()
       .references(() => scholarships.id),
 
+    registrationFee: integer("registration_fee").notNull(),
+
+    status: varchar("status", { length: 20 }).default("Pending").notNull(),
+
+    paymentStatus: varchar("payment_status", { length: 20 })
+      .default("Unpaid")
+      .notNull(),
+
     registeredAt: timestamp("registered_at").defaultNow().notNull(),
   },
   (table) => [
