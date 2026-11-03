@@ -159,6 +159,57 @@ export const scholarshipRegistrations = pgTable(
   ],
 );
 
+export const paymentSubmissions = pgTable("payment_submissions", {
+  id: serial("id").primaryKey(),
+
+  institutionId: integer("institution_id")
+    .notNull()
+    .references(() => institutions.id),
+
+  scholarshipId: integer("scholarship_id")
+    .notNull()
+    .references(() => scholarships.id),
+
+  totalAmount: integer("total_amount").notNull(),
+
+  paymentMethod: varchar("payment_method", { length: 50 }).notNull(),
+
+  transactionId: varchar("transaction_id", { length: 255 }).notNull(),
+
+  screenshotUrl: varchar("screenshot_url", { length: 1000 }).notNull(),
+
+  status: varchar("status", { length: 20 }).default("Pending").notNull(),
+
+  adminNote: varchar("admin_note", { length: 1000 }),
+
+  reviewedAt: timestamp("reviewed_at"),
+
+  submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+});
+
+export const paymentSubmissionItems = pgTable(
+  "payment_submission_items",
+  {
+    id: serial("id").primaryKey(),
+
+    paymentSubmissionId: integer("payment_submission_id")
+      .notNull()
+      .references(() => paymentSubmissions.id),
+
+    registrationId: integer("registration_id")
+      .notNull()
+      .references(() => scholarshipRegistrations.id),
+
+    amount: integer("amount").notNull(),
+  },
+  (table) => [
+    uniqueIndex("payment_submission_registration_unique").on(
+      table.paymentSubmissionId,
+      table.registrationId,
+    ),
+  ],
+);
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),

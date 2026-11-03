@@ -16,6 +16,7 @@ import {
   UserShield,
   History,
   Settings,
+  CreditCard,
 } from "lucide-react";
 import { useState } from "react";
 import SignOutButton from "./SignOutButton";
@@ -46,6 +47,11 @@ const navigation = [
     title: "Student Registrations",
     href: "/admin/registrations",
     icon: ClipboardPenLine,
+  },
+  {
+    title: "Payment Management",
+    href: "/admin/payments",
+    icon: CreditCard,
   },
   {
     title: "Grants",

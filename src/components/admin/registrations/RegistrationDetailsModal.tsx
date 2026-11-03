@@ -37,10 +37,11 @@ export default function RegistrationDetailsModal({
   const [copied, setCopied] = useState(false);
 
   if (!registration) return null;
+  const studentId = registration.studentId;
 
   async function handleCopyId() {
     try {
-      await navigator.clipboard.writeText(registration.studentId);
+      await navigator.clipboard.writeText(studentId);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {

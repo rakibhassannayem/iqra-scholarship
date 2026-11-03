@@ -1,4 +1,3 @@
-import NoticeHero from "@/components/public/notices/NoticeHero";
 import NoticeTable from "@/components/public/notices/NoticeTable";
 
 export default function NoticePage() {

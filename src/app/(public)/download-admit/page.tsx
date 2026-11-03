@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import DownloadAdmitHero from "@/components/public/download-admit/DownloadAdmitHero";
 import DownloadAdmitLookup from "@/components/public/download-admit/DownloadAdmitLookup";
 
 export const metadata: Metadata = {
@@ -11,7 +10,6 @@ export const metadata: Metadata = {
 export default function DownloadAdmitPage() {
   return (
     <>
-      
       <DownloadAdmitLookup />
     </>
   );

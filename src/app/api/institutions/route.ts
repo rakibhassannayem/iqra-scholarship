@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { institutions, activityLogs } from "@/lib/db/schema";
-import { asc } from "drizzle-orm";
+import {
+  institutions,
+  activityLogs,
+  students,
+  scholarshipRegistrations,
+} from "@/lib/db/schema";
+import { asc, eq } from "drizzle-orm";
 import { auth } from "../../../../auth";
 
 export async function POST(request: Request) {
@@ -108,8 +113,29 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const hasRegistrations = searchParams.get("hasRegistrations") === "true";
+
+    if (hasRegistrations) {
+      const filteredInstitutions = await db
+        .selectDistinct({
+          id: institutions.id,
+          name: institutions.name,
+          eiin: institutions.eiin,
+        })
+        .from(institutions)
+        .innerJoin(students, eq(institutions.id, students.institutionId))
+        .innerJoin(
+          scholarshipRegistrations,
+          eq(students.id, scholarshipRegistrations.studentId),
+        )
+        .orderBy(asc(institutions.name));
+
+      return NextResponse.json(filteredInstitutions);
+    }
+
     const allInstitutions = await db
       .select()
       .from(institutions)

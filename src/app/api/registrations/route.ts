@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   students,
@@ -8,9 +8,26 @@ import {
   scholarshipRegistrations,
 } from "@/lib/db/schema";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const registrations = await db
+    const { searchParams } = new URL(request.url);
+
+    const institutionId = searchParams.get("institutionId");
+    const scholarshipId = searchParams.get("scholarshipId");
+
+    const conditions = [];
+
+    if (institutionId) {
+      conditions.push(eq(students.institutionId, Number(institutionId)));
+    }
+
+    if (scholarshipId) {
+      conditions.push(
+        eq(scholarshipRegistrations.scholarshipId, Number(scholarshipId)),
+      );
+    }
+
+    const query = db
       .select({
         id: scholarshipRegistrations.id,
         studentDbId: students.id,
@@ -32,8 +49,14 @@ export async function GET() {
       .innerJoin(
         scholarships,
         eq(scholarshipRegistrations.scholarshipId, scholarships.id),
-      )
-      .orderBy(desc(scholarshipRegistrations.registeredAt));
+      );
+
+    const registrations =
+      conditions.length > 0
+        ? await query
+            .where(conditions.length === 1 ? conditions[0] : and(...conditions))
+            .orderBy(desc(scholarshipRegistrations.registeredAt))
+        : await query.orderBy(desc(scholarshipRegistrations.registeredAt));
 
     return NextResponse.json(registrations);
   } catch (error) {
