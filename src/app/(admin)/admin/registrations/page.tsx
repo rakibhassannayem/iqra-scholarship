@@ -1,9 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
+import { RefreshCw, AlertCircle, CheckCircle2, UserPlus } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,12 +12,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import StudentForm, {
+  type StudentFormValues,
+} from "@/components/admin/students/StudentForm";
 
 import RegistrationTable, {
   type Registration,
 } from "@/components/admin/registrations/RegistrationTable";
 import RegistrationDetailsModal from "@/components/admin/registrations/RegistrationDetailsModal";
+import { toast } from "@/components/ui/toast";
 
 export default function RegistrationsPage() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
@@ -29,15 +33,18 @@ export default function RegistrationsPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const [selectedRegistration, setSelectedRegistration] =
-    useState<Registration | null>(null);
-
-  const [pendingStatus, setPendingStatus] = useState<
-    Registration["status"] | null
-  >(null);
+  const [deleteError, setDeleteError] = useState("");
 
   const [viewingRegistration, setViewingRegistration] =
     useState<Registration | null>(null);
+
+  const [formOpen, setFormOpen] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  const [registrationToDelete, setRegistrationToDelete] =
+    useState<Registration | null>(null);
+
+  const [deleting, setDeleting] = useState(false);
 
   const fetchRegistrations = useCallback(async () => {
     setLoading(true);
@@ -66,57 +73,86 @@ export default function RegistrationsPage() {
     fetchRegistrations();
   }, [fetchRegistrations]);
 
-  function openStatusConfirmation(
-    registration: Registration,
-    status: Registration["status"],
-  ) {
-    setSelectedRegistration(registration);
-    setPendingStatus(status);
+  function openCreateForm() {
+    setFormError("");
+    setFormOpen(true);
   }
 
-  async function handleStatusChange() {
-    if (!selectedRegistration || !pendingStatus) return;
-
+  async function handleSubmit(values: StudentFormValues) {
     setSaving(true);
+    setFormError("");
     setError("");
     setSuccess("");
 
     try {
+      const response = await fetch("/api/students", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to register student.");
+      }
+
+      setFormOpen(false);
+
+      setSuccess(
+        `Student registered successfully with ID: ${data.studentId || data.student?.studentId || "Generated"}`,
+      );
+
+      await fetchRegistrations();
+    } catch (err) {
+      setFormError(
+        err instanceof Error ? err.message : "Failed to register student.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleDelete(registration: Registration) {
+    setDeleteError("");
+    setRegistrationToDelete(registration);
+  }
+
+  async function handleConfirmDelete() {
+    if (!registrationToDelete) return;
+
+    setDeleting(true);
+    setDeleteError("");
+
+    try {
       const response = await fetch(
-        `/api/registrations/${selectedRegistration.id}`,
+        `/api/registrations/${registrationToDelete.id}`,
         {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            status: pendingStatus,
-          }),
+          method: "DELETE",
         },
       );
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to update registration status.");
+        throw new Error(data.message || "Failed to delete registration.");
       }
 
-      setSelectedRegistration(null);
-      setPendingStatus(null);
+      toast.add({
+        title: data.message || "Registration deleted successfully.",
+        type: "success",
+      });
 
-      setSuccess(
-        `Registration status updated to ${pendingStatus} successfully.`,
-      );
-
+      setRegistrationToDelete(null);
       await fetchRegistrations();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to update registration status.",
+      setDeleteError(
+        err instanceof Error ? err.message : "Failed to delete registration.",
       );
     } finally {
-      setSaving(false);
+      setDeleting(false);
     }
   }
 
@@ -142,20 +178,30 @@ export default function RegistrationsPage() {
           </h1>
 
           <p className="text-sm text-muted-foreground">
-            Manage scholarship registrations and their approval status.
+            Manage scholarship registrations and track their payment approval
+            status.
           </p>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={fetchRegistrations}
-          disabled={loading}
-          className="gap-1.5"
-        >
-          <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchRegistrations}
+            disabled={loading}
+            className="gap-1.5"
+          >
+            <RefreshCw
+              className={`size-3.5 ${loading ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </Button>
+
+          <Button onClick={openCreateForm} className="gap-1.5">
+            <UserPlus className="size-4" />
+            Register Student
+          </Button>
+        </div>
       </div>
 
       {/* Notifications */}
@@ -222,7 +268,7 @@ export default function RegistrationsPage() {
           onView={(registration) => {
             setViewingRegistration(registration);
           }}
-          onStatusChange={openStatusConfirmation}
+          onDelete={handleDelete}
         />
       )}
 
@@ -234,39 +280,62 @@ export default function RegistrationsPage() {
         }}
       />
 
-      {/* Status Confirmation */}
-      <AlertDialog
-        open={Boolean(selectedRegistration && pendingStatus)}
+      {/* Register Student Modal */}
+      <StudentForm
+        open={formOpen}
         onOpenChange={(open) => {
-          if (!open && !saving) {
-            setSelectedRegistration(null);
-            setPendingStatus(null);
+          setFormOpen(open);
+
+          if (!open) {
+            setFormError("");
+          }
+        }}
+        initialValues={null}
+        editing={false}
+        saving={saving}
+        error={formError}
+        onSubmit={handleSubmit}
+      />
+
+      <AlertDialog
+        open={Boolean(registrationToDelete)}
+        onOpenChange={(open) => {
+          if (!open && !deleting) {
+            setRegistrationToDelete(null);
           }
         }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Change Registration Status?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Registration?</AlertDialogTitle>
 
             <AlertDialogDescription>
-              Are you sure you want to change the registration status of{" "}
-              <strong>{selectedRegistration?.studentName}</strong> from{" "}
-              <strong>{selectedRegistration?.status}</strong> to{" "}
-              <strong>{pendingStatus}</strong>?
+              Are you sure you want to delete registration #
+              {registrationToDelete?.id} for {registrationToDelete?.studentName}
+              ? If this student has no other registrations, their student record
+              will also be deleted. Registrations with payment history cannot be
+              deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
+          {deleteError && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {deleteError}
+            </div>
+          )}
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
 
             <AlertDialogAction
-              disabled={saving}
+              disabled={deleting}
               onClick={(event) => {
                 event.preventDefault();
-                handleStatusChange();
+                void handleConfirmDelete();
               }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {saving ? "Updating..." : "Confirm"}
+              {deleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

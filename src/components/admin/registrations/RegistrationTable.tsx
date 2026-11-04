@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, Eye, Check, X, RotateCcw, ClipboardList } from "lucide-react";
+import { Search, Eye, X, ClipboardList, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,10 +37,7 @@ type RegistrationTableProps = {
   registrations: Registration[];
   loading: boolean;
   onView: (registration: Registration) => void;
-  onStatusChange: (
-    registration: Registration,
-    status: Registration["status"],
-  ) => void;
+  onDelete: (registration: Registration) => void;
 };
 
 function convertToEnglishDigits(value: string) {
@@ -64,7 +61,7 @@ export default function RegistrationTable({
   registrations,
   loading,
   onView,
-  onStatusChange,
+  onDelete,
 }: RegistrationTableProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -292,7 +289,7 @@ export default function RegistrationTable({
                     </TableCell>
 
                     <TableCell>
-                      <div className="flex justify-end gap-1">
+                      <div className="flex justify-end gap-2">
                         <Button
                           type="button"
                           variant="outline"
@@ -303,65 +300,15 @@ export default function RegistrationTable({
                           <Eye className="size-4" />
                         </Button>
 
-                        {registration.status === "Pending" && (
-                          <>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              aria-label="Approve registration"
-                              title="Approve"
-                              onClick={() =>
-                                onStatusChange(registration, "Approved")
-                              }
-                            >
-                              <Check className="size-4 text-green-600" />
-                            </Button>
-
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              aria-label="Cancel registration"
-                              title="Cancel"
-                              onClick={() =>
-                                onStatusChange(registration, "Cancelled")
-                              }
-                            >
-                              <X className="size-4 text-destructive" />
-                            </Button>
-                          </>
-                        )}
-
-                        {registration.status === "Approved" && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            aria-label="Cancel registration"
-                            title="Cancel"
-                            onClick={() =>
-                              onStatusChange(registration, "Cancelled")
-                            }
-                          >
-                            <X className="size-4 text-destructive" />
-                          </Button>
-                        )}
-
-                        {registration.status === "Cancelled" && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            aria-label="Restore registration"
-                            title="Restore"
-                            onClick={() =>
-                              onStatusChange(registration, "Approved")
-                            }
-                          >
-                            <RotateCcw className="size-4 text-green-600" />
-                          </Button>
-                        )}
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          aria-label="Delete registration"
+                          onClick={() => onDelete(registration)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

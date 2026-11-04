@@ -12,6 +12,7 @@ export default function Navbar() {
     { label: t("register"), href: "/register" },
     { label: t("downloadAdmit"), href: "/download-admit" },
     { label: t("result"), href: "/result" },
+    { label: t("payment"), href: "/payment" },
     { label: t("notice"), href: "/notices" },
     { label: t("contact"), href: "/contact" },
     { label: t("about"), href: "/about" },
