@@ -19,6 +19,7 @@ import {
   CreditCard,
   Globe,
   ExternalLink,
+  FileText,
 } from "lucide-react";
 import { useState } from "react";
 import SignOutButton from "./SignOutButton";
@@ -79,6 +80,11 @@ const navigation = [
     title: "Activity History",
     href: "/admin/activity-history",
     icon: History,
+  },
+  {
+    title: "About Pages",
+    href: "/admin/about-pages",
+    icon: FileText,
   },
   {
     title: "Settings",

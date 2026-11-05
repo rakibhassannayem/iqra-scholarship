@@ -1,9 +1,35 @@
 "use client";
 
 import { useLanguage } from "@/i18n/LanguageProvider";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowRight, BookOpen } from "lucide-react";
+
+type SubPage = {
+  id: number;
+  title: string;
+  slug: string;
+};
 
 export default function AboutContent() {
   const { language } = useLanguage();
+  const [subPages, setSubPages] = useState<SubPage[]>([]);
+
+  useEffect(() => {
+    async function fetchSubPages() {
+      try {
+        const res = await fetch("/api/public/about-pages");
+        if (res.ok) {
+          const data = await res.json();
+          setSubPages(data);
+        }
+      } catch (err) {
+        console.error("Failed to load sub-pages:", err);
+      }
+    }
+
+    void fetchSubPages();
+  }, []);
 
   const sections = [
     {
@@ -73,6 +99,47 @@ export default function AboutContent() {
             </article>
           ))}
         </div>
+
+        {/* Dynamic Sub-pages section */}
+        {subPages.length > 0 && (
+          <div className="mt-16 rounded-2xl border border-border/80 bg-card/60 p-6 sm:p-10 backdrop-blur">
+            <div className="mb-8 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-foreground sm:text-2xl">
+                  {language === "bn"
+                    ? "সম্পর্কিত অন্যান্য তথ্য ও বিবরণ"
+                    : "Related About Information"}
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {language === "bn"
+                    ? "নিচের পেজগুলোতে বিস্তারিত বিবরণ দেখুন"
+                    : "Explore detailed pages below"}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {subPages.map((page) => (
+                <Link
+                  key={page.id}
+                  href={`/about/${page.slug}`}
+                  className="group flex items-center justify-between rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                      <BookOpen className="size-4" />
+                    </div>
+                    <span className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {page.title}
+                    </span>
+                  </div>
+
+                  <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

@@ -3,6 +3,7 @@ import {
   pgTable,
   serial,
   varchar,
+  text,
   timestamp,
   integer,
   boolean,
@@ -256,5 +257,16 @@ export const settings = pgTable("settings", {
 
   value: varchar("value", { length: 1000 }).notNull(),
 
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const aboutPages = pgTable("about_pages", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  content: text("content").notNull().default(""),
+  order: integer("order").notNull().default(0),
+  isPublished: boolean("is_published").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
