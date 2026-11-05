@@ -66,8 +66,8 @@ export async function PATCH(
         throw new Error("PAYMENT_NOT_FOUND");
       }
 
-      if (payment.status !== "Pending") {
-        throw new Error("PAYMENT_ALREADY_REVIEWED");
+      if (payment.status === status) {
+        throw new Error("PAYMENT_STATUS_UNCHANGED");
       }
 
       // Get linked registrations.
@@ -94,10 +94,17 @@ export async function PATCH(
         .where(inArray(scholarshipRegistrations.id, registrationIds))
         .for("update");
 
+      const expectedPaymentStatus = {
+        Pending: "Pending",
+        Approved: "Paid",
+        Rejected: "Unpaid",
+      }[payment.status];
+
       if (
         registrations.length !== registrationIds.length ||
         registrations.some(
-          (registration) => registration.paymentStatus !== "Pending",
+          (registration) =>
+            registration.paymentStatus !== expectedPaymentStatus,
         )
       ) {
         throw new Error("REGISTRATION_PAYMENT_CONFLICT");
@@ -162,8 +169,8 @@ export async function PATCH(
         message: "Payment submission not found.",
         status: 404,
       },
-      PAYMENT_ALREADY_REVIEWED: {
-        message: "This payment has already been reviewed.",
+      PAYMENT_STATUS_UNCHANGED: {
+        message: `Payment is already ${status.toLowerCase()}.`,
         status: 409,
       },
       NO_PAYMENT_ITEMS: {

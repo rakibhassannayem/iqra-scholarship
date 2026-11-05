@@ -165,7 +165,9 @@ export default function PaymentDetailsModal({
             </div>
           </div>
 
-          {payment.status === "Pending" && (
+          {(payment.status === "Pending" ||
+            payment.status === "Approved" ||
+            payment.status === "Rejected") && (
             <div className="space-y-4 border-t pt-5">
               <div>
                 <label
@@ -191,33 +193,37 @@ export default function PaymentDetailsModal({
               )}
 
               <div className="flex flex-wrap justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleReview("Rejected")}
-                  disabled={loading}
-                  className="inline-flex items-center gap-2 rounded-lg border border-destructive px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
-                >
-                  {loading && reviewAction === "Rejected" ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Ban className="size-4" />
-                  )}
-                  Reject Payment
-                </button>
+                {payment.status !== "Approved" && (
+                  <button
+                    type="button"
+                    onClick={() => handleReview("Approved")}
+                    disabled={loading}
+                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                  >
+                    {loading && reviewAction === "Approved" ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Check className="size-4" />
+                    )}
+                    Approve Payment
+                  </button>
+                )}
 
-                <button
-                  type="button"
-                  onClick={() => handleReview("Approved")}
-                  disabled={loading}
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
-                >
-                  {loading && reviewAction === "Approved" ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Check className="size-4" />
-                  )}
-                  Approve Payment
-                </button>
+                {payment.status !== "Rejected" && (
+                  <button
+                    type="button"
+                    onClick={() => handleReview("Rejected")}
+                    disabled={loading}
+                    className="inline-flex items-center gap-2 rounded-lg border border-destructive px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                  >
+                    {loading && reviewAction === "Rejected" ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Ban className="size-4" />
+                    )}
+                    Reject Payment
+                  </button>
+                )}
               </div>
             </div>
           )}
