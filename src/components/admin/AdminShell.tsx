@@ -17,6 +17,8 @@ import {
   History,
   Settings,
   CreditCard,
+  Globe,
+  ExternalLink,
 } from "lucide-react";
 import { useState } from "react";
 import SignOutButton from "./SignOutButton";
@@ -168,12 +170,27 @@ export default function AdminShell({
           })}
         </nav>
 
-        <div className="mt-auto border-t p-4">
-          <p className="mb-3 text-xs text-muted-foreground">
-            Iqra Noorani Talimul Quran
-          </p>
+        <div className="mt-auto space-y-3 border-t p-4">
+          <Link
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <span className="flex items-center gap-2">
+              <Globe className="size-4 text-primary" />
+              Public Website
+            </span>
+            <ExternalLink className="size-3 text-muted-foreground" />
+          </Link>
 
-          <SignOutButton />
+          <div>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Iqra Noorani Talimul Quran
+            </p>
+
+            <SignOutButton />
+          </div>
         </div>
       </aside>
 
@@ -203,11 +220,25 @@ export default function AdminShell({
             </div>
           </div>
 
-          <div className="flex flex-col items-center rounded-full text-sm font-medium text-center">
-            {session?.user?.name ?? "AdminName"}
-            <span className="text-xs text-muted-foreground">
-              {session?.user?.role}
-            </span>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted sm:text-sm"
+              title="View Public Website"
+            >
+              <Globe className="size-4 text-primary" />
+              <span className="hidden sm:inline">View Website</span>
+              <ExternalLink className="size-3 text-muted-foreground" />
+            </Link>
+
+            <div className="flex flex-col items-center rounded-full text-center text-sm font-medium">
+              {session?.user?.name ?? "AdminName"}
+              <span className="text-xs text-muted-foreground">
+                {session?.user?.role}
+              </span>
+            </div>
           </div>
         </header>
 

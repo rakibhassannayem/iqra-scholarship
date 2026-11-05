@@ -9,6 +9,7 @@ export const translations = {
     payment: "পেমেন্ট",
     downloadAdmit: "প্রবেশপত্র ডাউনলোড",
     result: "ফলাফল দেখুন",
+    admin: "এডমিন",
     language: "বাং / EN",
 
     // Homepage - Hero Section
@@ -52,6 +53,7 @@ export const translations = {
     payment: "Payment",
     downloadAdmit: "Download Admit",
     result: "Check Result",
+    admin: "Admin",
     language: "বাং / EN",
 
     // Homepage - Hero Section

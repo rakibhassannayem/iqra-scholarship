@@ -19,6 +19,7 @@ export default function Navbar() {
     { label: t("notice"), href: "/notices" },
     { label: t("contact"), href: "/contact" },
     { label: t("about"), href: "/about" },
+    { label: t("admin"), href: "/admin" },
   ];
 
   return (
