@@ -21,7 +21,7 @@ import {
   CreditCard,
   ClipboardList,
 } from "lucide-react";
-import type { Registration } from "./RegistrationTable";
+import type { Registration } from "@/types/registration";
 
 type RegistrationDetailsModalProps = {
   registration: Registration | null;

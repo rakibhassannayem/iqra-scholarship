@@ -13,29 +13,8 @@ import {
   Trophy,
 } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageProvider";
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-type ResultStatus = "awarded" | "not-awarded" | "not-registered";
-
-type StudentResult = {
-  studentId: string;
-  name: string;
-  class: number;
-  roll: number;
-  institutionName?: string;
-  scholarshipName?: string | null;
-  result: {
-    status: ResultStatus;
-    category: string | null;
-  };
-};
-
-type Institution = {
-  id: number;
-  name: string;
-  eiin: string;
-};
+import type { ResultStatus, StudentResult } from "@/types/result";
+import type { Institution } from "@/types/institution";
 
 function convertBengaliDigitsToEnglish(input: string): string {
   const banglaDigits: Record<string, string> = {

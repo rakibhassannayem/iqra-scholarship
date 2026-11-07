@@ -5,13 +5,7 @@ import { siteConfig } from "@/config/site";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X, ChevronDown } from "lucide-react";
-
-type SubPage = {
-  id: number;
-  title: string;
-  slug: string;
-  order: number;
-};
+import type { SubPage } from "@/types/about-page";
 
 export default function Navbar() {
   const { language, setLanguage, t } = useLanguage();

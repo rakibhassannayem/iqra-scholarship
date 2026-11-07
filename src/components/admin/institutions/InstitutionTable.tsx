@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/pagination";
 import {
   Pencil,
-  Trash2,
   Eye,
   School,
   MapPin,
@@ -25,30 +24,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type { Institution } from "@/types/institution";
 
-export type Institution = {
-  id: number;
-  name: string;
-  eiin: string;
-  principal: string | null;
-  principalPhone: string | null;
-  representative: string | null;
-  representativePhone: string | null;
-  division: string | null;
-  district: string | null;
-  upazila: string | null;
-  village: string | null;
-  block: string | null;
-  address: string | null;
-  createdAt: string;
-};
+export type { Institution };
 
 type InstitutionTableProps = {
   institutions: Institution[];
   loading: boolean;
   onView: (institution: Institution) => void;
   onEdit: (institution: Institution) => void;
-  onDelete: (institution: Institution) => void;
 };
 
 export default function InstitutionTable({
@@ -56,114 +40,125 @@ export default function InstitutionTable({
   loading,
   onView,
   onEdit,
-  onDelete,
 }: InstitutionTableProps) {
   const [search, setSearch] = useState("");
   const [districtFilter, setDistrictFilter] = useState("all");
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
 
-  const distinctDistricts = useMemo(() => {
-    const map = new Map<string, string>();
-    institutions.forEach((inst) => {
-      if (inst.district) map.set(inst.district, inst.district);
-    });
-    return Array.from(map.values());
-  }, [institutions]);
-
+  // Filter & Search
   const filteredInstitutions = useMemo(() => {
-    return institutions.filter((item) => {
-      const q = search.trim().toLowerCase();
-      if (q) {
-        const matchesName = item.name.toLowerCase().includes(q);
-        const matchesEiin = item.eiin.toLowerCase().includes(q);
-        const matchesPrincipal = item.principal?.toLowerCase().includes(q);
-        const matchesRep = item.representative?.toLowerCase().includes(q);
-        const matchesDistrict = item.district?.toLowerCase().includes(q);
-        const matchesUpazila = item.upazila?.toLowerCase().includes(q);
-        if (
-          !matchesName &&
-          !matchesEiin &&
-          !matchesPrincipal &&
-          !matchesRep &&
-          !matchesDistrict &&
-          !matchesUpazila
-        ) {
-          return false;
-        }
-      }
+    return institutions.filter((institution) => {
+      const query = search.toLowerCase();
+      const matchesSearch =
+        institution.name.toLowerCase().includes(query) ||
+        institution.eiin.toLowerCase().includes(query) ||
+        (institution.principal &&
+          institution.principal.toLowerCase().includes(query)) ||
+        (institution.representative &&
+          institution.representative.toLowerCase().includes(query)) ||
+        (institution.district &&
+          institution.district.toLowerCase().includes(query)) ||
+        (institution.upazila &&
+          institution.upazila.toLowerCase().includes(query));
 
-      if (districtFilter !== "all" && item.district !== districtFilter) {
-        return false;
-      }
+      const matchesDistrict =
+        districtFilter === "all" ||
+        institution.district?.toLowerCase() === districtFilter.toLowerCase();
 
-      return true;
+      return matchesSearch && matchesDistrict;
     });
   }, [institutions, search, districtFilter]);
 
-  const hasActiveFilters = search.trim() !== "" || districtFilter !== "all";
+  // Unique districts for filter dropdown
+  const uniqueDistricts = useMemo(() => {
+    const districts = institutions
+      .map((i) => i.district)
+      .filter((d): d is string => Boolean(d));
+    return Array.from(new Set(districts)).sort();
+  }, [institutions]);
 
-  function clearFilters() {
-    setSearch("");
-    setDistrictFilter("all");
-    setPage(1);
-  }
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredInstitutions.length / PAGE_SIZE) || 1;
+  const paginatedInstitutions = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredInstitutions.slice(start, start + PAGE_SIZE);
+  }, [filteredInstitutions, page]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredInstitutions.length / PAGE_SIZE));
-  const pagedInstitutions = filteredInstitutions.slice(
-    (page - 1) * PAGE_SIZE,
-    page * PAGE_SIZE,
-  );
-
-  function handleSearchChange(value: string) {
+  // Reset page when search or filters change
+  const handleSearchChange = (value: string) => {
     setSearch(value);
     setPage(1);
-  }
+  };
 
-  function handleDistrictChange(value: string) {
+  const handleDistrictChange = (value: string) => {
     setDistrictFilter(value);
     setPage(1);
-  }
+  };
 
-  function getPageNumbers() {
-    const pages: (number | "ellipsis")[] = [];
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
+  // Helper for generating page numbers with ellipsis
+  const getPaginationItems = () => {
+    const items: (number | "ellipsis")[] = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) items.push(i);
     } else {
-      pages.push(1);
-      if (page > 3) pages.push("ellipsis");
-      const start = Math.max(2, page - 1);
-      const end = Math.min(totalPages - 1, page + 1);
-      for (let i = start; i <= end; i++) pages.push(i);
-      if (page < totalPages - 2) pages.push("ellipsis");
-      pages.push(totalPages);
+      if (page <= 3) {
+        items.push(1, 2, 3, 4, "ellipsis", totalPages);
+      } else if (page >= totalPages - 2) {
+        items.push(
+          1,
+          "ellipsis",
+          totalPages - 3,
+          totalPages - 2,
+          totalPages - 1,
+          totalPages,
+        );
+      } else {
+        items.push(
+          1,
+          "ellipsis",
+          page - 1,
+          page,
+          page + 1,
+          "ellipsis",
+          totalPages,
+        );
+      }
     }
-    return pages;
-  }
+    return items;
+  };
 
   return (
     <div className="space-y-4">
-      {/* Search and Filters */}
-      <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      {/* Controls: Search, Filter, Clear */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
-            placeholder="Search by institution name, EIIN, district, representative..."
+            placeholder="Search name, EIIN, contact..."
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-9"
+            className="pl-9 pr-9"
           />
+          {search && (
+            <button
+              onClick={() => handleSearchChange("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
-          {distinctDistricts.length > 0 && (
+          {uniqueDistricts.length > 0 && (
             <select
               value={districtFilter}
               onChange={(e) => handleDistrictChange(e.target.value)}
-              className="h-9 rounded-md border border-input bg-background px-2.5 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              <option value="all">All Districts (সকল জেলা)</option>
-              {distinctDistricts.map((d) => (
+              <option value="all">All Districts</option>
+              {uniqueDistricts.map((d) => (
                 <option key={d} value={d}>
                   {d}
                 </option>
@@ -171,178 +166,167 @@ export default function InstitutionTable({
             </select>
           )}
 
-          {hasActiveFilters && (
+          {(search || districtFilter !== "all") && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={clearFilters}
-              className="h-9 gap-1 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setSearch("");
+                setDistrictFilter("all");
+                setPage(1);
+              }}
+              className="h-10"
             >
-              <X className="size-3.5" /> Reset
+              Reset
             </Button>
           )}
         </div>
       </div>
 
-      {/* Table Results Count */}
-      <div className="flex items-center justify-between px-1 text-xs text-muted-foreground">
-        <span>
-          Showing{" "}
-          <strong className="text-foreground">
-            {filteredInstitutions.length === 0
-              ? 0
-              : (page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filteredInstitutions.length)}
-          </strong>{" "}
-          of {filteredInstitutions.length} institutions
-        </span>
-        {hasActiveFilters && (
-          <span className="text-primary font-medium">Filtered results</span>
-        )}
-      </div>
-
-      {/* Table Container */}
-      {loading && institutions.length === 0 ? (
-        <div className="rounded-xl border bg-card p-12 text-center text-muted-foreground">
-          <div className="inline-flex size-9 animate-spin items-center justify-center rounded-full border-4 border-primary border-t-transparent mb-3" />
-          <p className="text-sm">Loading institutions...</p>
-        </div>
-      ) : filteredInstitutions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
-          <School className="size-12 text-muted-foreground/30" />
-          <h3 className="mt-4 text-base font-semibold">No institutions found</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {hasActiveFilters
-              ? "No institutions match your search or filter criteria."
-              : "No institutions have been created yet."}
-          </p>
-          {hasActiveFilters && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearFilters}
-              className="mt-4 gap-1.5"
-            >
-              <X className="size-3.5" /> Clear Filters
-            </Button>
-          )}
-        </div>
-      ) : (
-        <>
-          <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b bg-muted/60 text-xs uppercase tracking-wider text-muted-foreground">
+      {/* Table Section */}
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <tr>
+                <th className="py-3 px-4">Institution</th>
+                <th className="py-3 px-4">EIIN</th>
+                <th className="py-3 px-4">Location</th>
+                <th className="py-3 px-4">Principal</th>
+                <th className="py-3 px-4">Representative</th>
+                <th className="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {loading ? (
                 <tr>
-                  <th className="px-4 py-3.5 font-semibold">Institution</th>
-                  <th className="px-4 py-3.5 font-semibold">Address</th>
-                  <th className="px-4 py-3.5 font-semibold">Principal (মোহতামিম)</th>
-                  <th className="px-4 py-3.5 font-semibold">Representative (প্রতিনিধি)</th>
-                  <th className="px-4 py-3.5 text-right font-semibold">Actions</th>
+                  <td
+                    colSpan={6}
+                    className="py-12 text-center text-muted-foreground"
+                  >
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      <span>Loading institutions...</span>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-
-              <tbody className="divide-y divide-border">
-                {pagedInstitutions.map((institution) => {
+              ) : paginatedInstitutions.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="py-12 text-center text-muted-foreground"
+                  >
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <School className="size-8 text-muted-foreground/60" />
+                      <span className="font-medium">No institutions found</span>
+                      <span className="text-xs">
+                        {search || districtFilter !== "all"
+                          ? "Try adjusting your search filters."
+                          : "Get started by adding your first institution."}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                paginatedInstitutions.map((institution) => {
                   const locationParts = [
                     institution.upazila,
                     institution.district,
-                    institution.division,
                   ].filter(Boolean);
 
                   return (
                     <tr
                       key={institution.id}
-                      className="transition-colors hover:bg-muted/40"
+                      className="hover:bg-muted/30 transition-colors"
                     >
-                      {/* Name & EIIN */}
-                      <td className="px-4 py-3.5">
-                        <div className="font-semibold text-foreground">
-                          {institution.name}
+                      {/* Name & Basic Info */}
+                      <td className="py-3.5 px-4">
+                        <div className="font-semibold text-foreground flex items-center gap-2">
+                          <Building className="size-4 text-muted-foreground shrink-0" />
+                          <span>{institution.name}</span>
                         </div>
-                        <div className="mt-1 flex items-center gap-1.5">
-                          <Badge
-                            variant="secondary"
-                            className="font-mono text-[11px] font-medium"
-                          >
-                            EIIN: {institution.eiin}
-                          </Badge>
-                        </div>
+                        {institution.village && (
+                          <div className="text-xs text-muted-foreground pl-6">
+                            {institution.village}
+                          </div>
+                        )}
                       </td>
 
-                      {/* Location / Address */}
-                      <td className="px-4 py-3.5">
+                      {/* EIIN */}
+                      <td className="py-3.5 px-4 font-mono text-xs">
+                        <Badge variant="outline" className="font-semibold">
+                          {institution.eiin}
+                        </Badge>
+                      </td>
+
+                      {/* Location */}
+                      <td className="py-3.5 px-4 text-muted-foreground">
                         {locationParts.length > 0 ? (
-                          <div className="flex items-center gap-1.5 text-xs text-foreground">
-                            <MapPin className="size-3.5 shrink-0 text-primary" />
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <MapPin className="size-3.5 shrink-0 text-muted-foreground/70" />
                             <span>{locationParts.join(", ")}</span>
                           </div>
                         ) : (
-                          <span className="text-xs text-muted-foreground italic">
-                            Address not set
+                          <span className="text-xs text-muted-foreground/50">
+                            -
                           </span>
                         )}
-                        {institution.village && (
-                          <div className="mt-0.5 text-[11px] text-muted-foreground">
-                            Village: {institution.village}
-                            {institution.block ? `, Block: ${institution.block}` : ""}
-                          </div>
-                        )}
                       </td>
 
-                      {/* Principal */}
-                      <td className="px-4 py-3.5">
+                      {/* Principal Info */}
+                      <td className="py-3.5 px-4">
                         {institution.principal ? (
-                          <div className="text-xs">
-                            <p className="font-medium text-foreground">
-                              {institution.principal}
-                            </p>
+                          <div className="space-y-0.5">
+                            <div className="text-xs font-medium text-foreground flex items-center gap-1">
+                              <User className="size-3 shrink-0 text-muted-foreground/70" />
+                              <span>{institution.principal}</span>
+                            </div>
                             {institution.principalPhone && (
-                              <a
-                                href={`tel:${institution.principalPhone}`}
-                                className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
-                              >
-                                <Phone className="size-2.5" />
-                                {institution.principalPhone}
-                              </a>
+                              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Phone className="size-3 shrink-0 text-muted-foreground/50" />
+                                <span>{institution.principalPhone}</span>
+                              </div>
                             )}
                           </div>
                         ) : (
-                          <span className="text-xs text-muted-foreground italic">—</span>
+                          <span className="text-xs text-muted-foreground/50">
+                            -
+                          </span>
                         )}
                       </td>
 
-                      {/* Representative */}
-                      <td className="px-4 py-3.5">
+                      {/* Representative Info */}
+                      <td className="py-3.5 px-4">
                         {institution.representative ? (
-                          <div className="text-xs">
-                            <p className="font-medium text-foreground">
-                              {institution.representative}
-                            </p>
+                          <div className="space-y-0.5">
+                            <div className="text-xs font-medium text-foreground flex items-center gap-1">
+                              <User className="size-3 shrink-0 text-muted-foreground/70" />
+                              <span>{institution.representative}</span>
+                            </div>
                             {institution.representativePhone && (
-                              <a
-                                href={`tel:${institution.representativePhone}`}
-                                className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
-                              >
-                                <Phone className="size-2.5" />
-                                {institution.representativePhone}
-                              </a>
+                              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Phone className="size-3 shrink-0 text-muted-foreground/50" />
+                                <span>{institution.representativePhone}</span>
+                              </div>
                             )}
                           </div>
                         ) : (
-                          <span className="text-xs text-muted-foreground italic">—</span>
+                          <span className="text-xs text-muted-foreground/50">
+                            -
+                          </span>
                         )}
                       </td>
 
                       {/* Actions */}
-                      <td className="px-4 py-3.5 text-right">
+                      <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => onView(institution)}
-                            title="View Details"
-                            aria-label={`View ${institution.name}`}
-                            className="size-8 text-muted-foreground hover:text-foreground"
+                            title="View details"
+                            aria-label={`View details for ${institution.name}`}
+                            className="size-8"
                           >
                             <Eye className="size-4" />
                           </Button>
@@ -353,75 +337,89 @@ export default function InstitutionTable({
                             onClick={() => onEdit(institution)}
                             title="Edit"
                             aria-label={`Edit ${institution.name}`}
-                            className="size-8 text-muted-foreground hover:text-foreground"
+                            className="size-8"
                           >
                             <Pencil className="size-4" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onDelete(institution)}
-                            title="Delete"
-                            aria-label={`Delete ${institution.name}`}
-                            className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                          >
-                            <Trash2 className="size-4" />
                           </Button>
                         </div>
                       </td>
                     </tr>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
+                })
+              )}
+            </tbody>
+          </table>
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <Pagination className="mt-4">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  href="#"
-                  onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(1, p - 1)); }}
-                  aria-disabled={page === 1}
-                  className={page === 1 ? "pointer-events-none opacity-50" : ""}
-                />
-              </PaginationItem>
+        {/* Footer with counts and Pagination */}
+        {!loading && filteredInstitutions.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t bg-muted/10 text-xs text-muted-foreground">
+            <div>
+              Showing{" "}
+              <span className="font-medium text-foreground">
+                {(page - 1) * PAGE_SIZE + 1}
+              </span>{" "}
+              to{" "}
+              <span className="font-medium text-foreground">
+                {Math.min(page * PAGE_SIZE, filteredInstitutions.length)}
+              </span>{" "}
+              of{" "}
+              <span className="font-medium text-foreground">
+                {filteredInstitutions.length}
+              </span>{" "}
+              institutions
+            </div>
 
-              {getPageNumbers().map((item, idx) =>
-                item === "ellipsis" ? (
-                  <PaginationItem key={`ellipsis-${idx}`}>
-                    <PaginationEllipsis />
+            {totalPages > 1 && (
+              <Pagination className="justify-end w-auto mx-0">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                      className={
+                        page === 1
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
                   </PaginationItem>
-                ) : (
-                  <PaginationItem key={item}>
-                    <PaginationLink
-                      href="#"
-                      isActive={page === item}
-                      onClick={(e) => { e.preventDefault(); setPage(item); }}
-                    >
-                      {item}
-                    </PaginationLink>
-                  </PaginationItem>
-                )
-              )}
 
-              <PaginationItem>
-                <PaginationNext
-                  href="#"
-                  onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(totalPages, p + 1)); }}
-                  aria-disabled={page === totalPages}
-                  className={page === totalPages ? "pointer-events-none opacity-50" : ""}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+                  {getPaginationItems().map((item, idx) =>
+                    item === "ellipsis" ? (
+                      <PaginationItem key={`ellipsis-${idx}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    ) : (
+                      <PaginationItem key={item}>
+                        <PaginationLink
+                          isActive={page === item}
+                          onClick={() => setPage(item)}
+                          className="cursor-pointer"
+                        >
+                          {item}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ),
+                  )}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() =>
+                        setPage((p) => Math.min(p + 1, totalPages))
+                      }
+                      className={
+                        page === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+          </div>
         )}
-        </>
-      )}
+      </div>
     </div>
   );
 }

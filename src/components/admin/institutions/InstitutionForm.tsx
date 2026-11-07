@@ -12,21 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { School, User, MapPin } from "lucide-react";
+import type { InstitutionFormValues } from "@/types/institution";
 
-export type InstitutionFormValues = {
-  name: string;
-  eiin: string;
-  principal: string;
-  principalPhone: string;
-  representative: string;
-  representativePhone: string;
-  division: string;
-  district: string;
-  upazila: string;
-  village: string;
-  block: string;
-  address: string;
-};
+export type { InstitutionFormValues };
 
 export const emptyInstitutionForm: InstitutionFormValues = {
   name: "",

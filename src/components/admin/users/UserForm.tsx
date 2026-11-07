@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,13 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useEffect, useState } from "react";
+import type { UserFormValues } from "@/types/user";
 
-export type UserFormValues = {
-  name: string;
-  email: string;
-  password: string;
-  role: string;
-};
+export type { UserFormValues };
 
 export const emptyUserForm: UserFormValues = {
   name: "",
@@ -55,15 +51,22 @@ export default function UserForm({
 }: UserFormProps) {
   const [name, setName] = useState(initialValues.name);
   const [email, setEmail] = useState(initialValues.email);
-  const [password, setPassword] = useState(initialValues.password);
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState(initialValues.role);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    setName(initialValues.name);
+    setEmail(initialValues.email);
+    setPassword("");
+    setRole(initialValues.role);
+  }, [initialValues, open]);
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     onSubmit({
       name: name.trim(),
-      email: email.trim().toLowerCase(),
+      email: email.trim(),
       password,
       role,
     });
@@ -76,8 +79,8 @@ export default function UserForm({
           <DialogTitle>{editing ? "Edit User" : "Create User"}</DialogTitle>
           <DialogDescription>
             {editing
-              ? "Update the user's information. Leave password empty to keep it unchanged."
-              : "Add a new user to the admin panel."}
+              ? "Update user details. Leave password empty to keep existing password."
+              : "Add a new admin user."}
           </DialogDescription>
         </DialogHeader>
 
@@ -88,48 +91,41 @@ export default function UserForm({
               id="user-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Enter full name"
-              maxLength={255}
+              placeholder="e.g. John Doe"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="user-email">Email</Label>
+            <Label htmlFor="user-email">Email Address</Label>
             <Input
               id="user-email"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="user@example.com"
-              maxLength={255}
+              placeholder="e.g. john@example.com"
               required
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="user-password">
-              Password {editing ? "(Optional)" : ""}
+              {editing ? "Password (optional)" : "Password"}
             </Label>
             <Input
               id="user-password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder={
-                editing
-                  ? "Leave blank to keep current password"
-                  : "At least 8 characters"
-              }
-              minLength={editing && !password ? undefined : 8}
-              autoComplete="new-password"
+              placeholder={editing ? "Leave blank to keep unchanged" : "••••••••"}
               required={!editing}
+              minLength={6}
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="user-role">Role</Label>
-            <Select value={role} onValueChange={(val) => setRole(val ?? "admin")}>
+            <Select value={role} onValueChange={(v) => setRole(v ?? "admin")}>
               <SelectTrigger id="user-role">
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
@@ -156,7 +152,11 @@ export default function UserForm({
               Cancel
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? "Saving..." : editing ? "Save Changes" : "Create User"}
+              {saving
+                ? "Saving..."
+                : editing
+                  ? "Save Changes"
+                  : "Create User"}
             </Button>
           </DialogFooter>
         </form>

@@ -3,20 +3,9 @@
 import React, { useRef } from "react";
 import { Printer, Copy, Check, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { AdmitCardData } from "@/types/admit-card";
 
-export type AdmitCardData = {
-  studentName: string;
-  studentId: string;
-  studentRoll: number | string;
-  studentClass: number | string;
-  institutionName: string;
-  institutionEiin: string;
-  scholarshipName?: string;
-  academicYear?: string;
-  examCenter?: string;
-  examDate?: string;
-  examTime?: string;
-};
+export type { AdmitCardData };
 
 type AdmitCardProps = {
   data: AdmitCardData;

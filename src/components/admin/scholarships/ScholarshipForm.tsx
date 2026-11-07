@@ -12,20 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
+import type { ScholarshipFormValues } from "@/types/scholarship";
 
-export type ScholarshipFormValues = {
-  name: string;
-  description: string;
-  academicYear: string;
-  endDate: string;
-  eligibilityClass: number;
-  registrationFee: number;
-  examCenter: string;
-  examDate: string;
-  examTime: string;
-  examStartTime: string;
-  examEndTime: string;
-};
+export type { ScholarshipFormValues };
 
 type ScholarshipFormProps = {
   open: boolean;

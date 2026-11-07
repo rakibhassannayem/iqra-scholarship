@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import {
   Table,
@@ -19,14 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Download, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-type Notice = {
-  id: number;
-  title: string;
-  content: string;
-  isPublished: boolean;
-  createdAt: string;
-};
+import type { Notice } from "@/types/notice";
 
 export default function NoticeTable() {
   const { language } = useLanguage();
@@ -67,7 +60,8 @@ export default function NoticeTable() {
     void fetchNotices();
   }, [isBangla]);
 
-  function formatDate(date: string) {
+  function formatDate(date?: string) {
+    if (!date) return "";
     return new Date(date).toLocaleDateString(isBangla ? "bn-BD" : "en-GB");
   }
   function handleDownload() {

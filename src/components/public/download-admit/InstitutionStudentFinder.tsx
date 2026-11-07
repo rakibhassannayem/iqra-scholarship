@@ -23,25 +23,10 @@ import {
   toBengaliClass,
   toBengaliNumber,
 } from "@/components/public/register/AdmitCard";
+import type { Institution } from "@/types/institution";
+import type { StudentSummary } from "@/types/student";
 
-export type Institution = {
-  id: number;
-  name: string;
-  eiin: string;
-  upazila?: string | null;
-  district?: string | null;
-  address?: string | null;
-};
-
-export type StudentSummary = {
-  id: number;
-  studentId: string;
-  name: string;
-  class: number;
-  roll: number;
-  institutionId: number;
-  institutionName: string;
-};
+export type { Institution, StudentSummary };
 
 interface InstitutionStudentFinderProps {
   onSelectStudent: (studentId: string) => void;

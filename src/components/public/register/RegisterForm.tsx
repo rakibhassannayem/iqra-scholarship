@@ -4,17 +4,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { GraduationCap } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import AdmitCard, { type AdmitCardData } from "./AdmitCard";
-
-type Institution = {
-  id: number;
-  name: string;
-  eiin: string;
-};
-
-type Scholarship = {
-  id: number;
-  isActive: boolean;
-};
+import type { Institution } from "@/types/institution";
+import type { Scholarship } from "@/types/scholarship";
 
 function convertBengaliDigitsToEnglish(input: string): string {
   const banglaDigits: Record<string, string> = {

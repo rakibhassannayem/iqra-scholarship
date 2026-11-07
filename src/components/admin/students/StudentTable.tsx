@@ -8,7 +8,6 @@ import {
   Search,
   Eye,
   Pencil,
-  Trash2,
   Copy,
   Check,
   Filter,
@@ -17,20 +16,9 @@ import {
   GraduationCap,
   Calendar,
 } from "lucide-react";
+import type { Student } from "@/types/student";
 
-export type Student = {
-  id: number;
-  studentId: string;
-  name: string;
-  class: number;
-  roll: number;
-  institutionId: number;
-  institutionName: string;
-  institutionEiin?: string;
-  scholarshipId?: number | null;
-  scholarshipName?: string | null;
-  createdAt: string;
-};
+export type { Student };
 
 type StudentTableProps = {
   students: Student[];
@@ -41,7 +29,6 @@ type StudentTableProps = {
   }[];
   onView: (student: Student) => void;
   onEdit: (student: Student) => void;
-  onDelete: (student: Student) => void;
 };
 
 export default function StudentTable({
@@ -49,7 +36,6 @@ export default function StudentTable({
   institutions,
   onView,
   onEdit,
-  onDelete,
 }: StudentTableProps) {
   const [search, setSearch] = useState("");
   const [selectedInstitution, setSelectedInstitution] = useState<string>("all");
@@ -58,236 +44,243 @@ export default function StudentTable({
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Extract distinct scholarships from data
-  const distinctScholarships = useMemo(() => {
-    const map = new Map<string, string>();
+  const availableScholarships = useMemo(() => {
+    const list: { id: number; name: string }[] = [];
+    const seen = new Set<number>();
     students.forEach((s) => {
-      if (s.scholarshipName) {
-        map.set(s.scholarshipName, s.scholarshipName);
+      if (s.scholarshipId && s.scholarshipName && !seen.has(s.scholarshipId)) {
+        seen.add(s.scholarshipId);
+        list.push({ id: s.scholarshipId, name: s.scholarshipName });
       }
     });
-    return Array.from(map.values());
+    return list;
   }, [students]);
 
-  // Filtering
+  // Filter logic
   const filteredStudents = useMemo(() => {
     return students.filter((student) => {
-      // Search query filter
+      // Text search (name, studentId, roll)
       const q = search.trim().toLowerCase();
-      if (q) {
-        const matchesName = student.name.toLowerCase().includes(q);
-        const matchesId = student.studentId.toLowerCase().includes(q);
-        const matchesRoll = String(student.roll).includes(q);
-        const matchesInst = student.institutionName?.toLowerCase().includes(q);
-        if (!matchesName && !matchesId && !matchesRoll && !matchesInst) {
-          return false;
-        }
-      }
+      const matchesSearch =
+        !q ||
+        student.name.toLowerCase().includes(q) ||
+        student.studentId.toLowerCase().includes(q) ||
+        String(student.roll).includes(q) ||
+        student.institutionName.toLowerCase().includes(q);
 
       // Institution filter
-      if (
-        selectedInstitution !== "all" &&
-        String(student.institutionId) !== selectedInstitution
-      ) {
-        return false;
-      }
+      const matchesInstitution =
+        selectedInstitution === "all" ||
+        String(student.institutionId) === selectedInstitution;
 
       // Class filter
-      if (selectedClass !== "all" && String(student.class) !== selectedClass) {
-        return false;
-      }
+      const matchesClass =
+        selectedClass === "all" || String(student.class) === selectedClass;
 
       // Scholarship filter
-      if (
-        selectedScholarship !== "all" &&
-        student.scholarshipName !== selectedScholarship
-      ) {
-        return false;
-      }
+      const matchesScholarship =
+        selectedScholarship === "all" ||
+        (selectedScholarship === "none"
+          ? !student.scholarshipId
+          : String(student.scholarshipId) === selectedScholarship);
 
-      return true;
+      return (
+        matchesSearch &&
+        matchesInstitution &&
+        matchesClass &&
+        matchesScholarship
+      );
     });
-  }, [students, search, selectedInstitution, selectedClass, selectedScholarship]);
+  }, [
+    students,
+    search,
+    selectedInstitution,
+    selectedClass,
+    selectedScholarship,
+  ]);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(text);
+    setTimeout(() => setCopiedId(null), 1500);
+  };
 
   const hasActiveFilters =
-    search.trim() !== "" ||
+    Boolean(search) ||
     selectedInstitution !== "all" ||
     selectedClass !== "all" ||
     selectedScholarship !== "all";
 
-  function clearFilters() {
+  const resetFilters = () => {
     setSearch("");
     setSelectedInstitution("all");
     setSelectedClass("all");
     setSelectedScholarship("all");
-  }
-
-  async function handleCopy(id: string) {
-    try {
-      await navigator.clipboard.writeText(id);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch {
-      // ignore
-    }
-  }
+  };
 
   return (
     <div className="space-y-4">
-      {/* Search and Filters Bar */}
-      <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search by student name, ID, roll or school..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+      {/* Search & Filter Bar */}
+      <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Search box */}
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by student name, ID, roll..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 pr-9"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Quick counts */}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>
+              Showing <strong>{filteredStudents.length}</strong> of{" "}
+              {students.length} students
+            </span>
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={resetFilters}
+                className="h-7 px-2 text-xs text-primary"
+              >
+                Reset filters
+              </Button>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Dropdown Filters */}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 pt-2 border-t">
           {/* Institution Filter */}
-          <select
-            value={selectedInstitution}
-            onChange={(e) => setSelectedInstitution(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-2.5 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-          >
-            <option value="all">All Institutions</option>
-            {institutions.map((inst) => (
-              <option key={inst.id} value={String(inst.id)}>
-                {inst.name}
-              </option>
-            ))}
-          </select>
-
-          {/* Class Filter */}
-          <select
-            value={selectedClass}
-            onChange={(e) => setSelectedClass(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-2.5 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-          >
-            <option value="all">All Classes</option>
-            {Array.from({ length: 10 }, (_, i) => i + 1).map((cls) => (
-              <option key={cls} value={String(cls)}>
-                Class {cls}
-              </option>
-            ))}
-          </select>
-
-          {/* Scholarship Filter */}
-          {distinctScholarships.length > 0 && (
+          <div className="space-y-1">
+            <label className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+              <School className="size-3" /> Institution
+            </label>
             <select
-              value={selectedScholarship}
-              onChange={(e) => setSelectedScholarship(e.target.value)}
-              className="h-9 rounded-md border border-input bg-background px-2.5 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              value={selectedInstitution}
+              onChange={(e) => setSelectedInstitution(e.target.value)}
+              className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
             >
-              <option value="all">All Scholarships</option>
-              {distinctScholarships.map((name) => (
-                <option key={name} value={name}>
-                  {name}
+              <option value="all">All Institutions</option>
+              {institutions.map((inst) => (
+                <option key={inst.id} value={String(inst.id)}>
+                  {inst.name} ({inst.eiin})
                 </option>
               ))}
             </select>
-          )}
+          </div>
 
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearFilters}
-              className="h-9 gap-1 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+          {/* Class Filter */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+              <GraduationCap className="size-3" /> Class
+            </label>
+            <select
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+              className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
             >
-              <X className="size-3.5" />
-              Reset
-            </Button>
-          )}
+              <option value="all">All Classes</option>
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((cls) => (
+                <option key={cls} value={String(cls)}>
+                  Class {cls}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Scholarship Filter */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+              <Calendar className="size-3" /> Scholarship Program
+            </label>
+            <select
+              value={selectedScholarship}
+              onChange={(e) => setSelectedScholarship(e.target.value)}
+              className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="all">All Scholarships</option>
+              <option value="none">No Scholarship (Direct)</option>
+              {availableScholarships.map((sch) => (
+                <option key={sch.id} value={String(sch.id)}>
+                  {sch.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Results Count Banner */}
-      <div className="flex items-center justify-between px-1 text-xs text-muted-foreground">
-        <span>
-          Showing{" "}
-          <strong className="text-foreground">{filteredStudents.length}</strong>{" "}
-          of {students.length} registrations
-        </span>
-        {hasActiveFilters && (
-          <span className="text-primary font-medium">Filtered results</span>
-        )}
-      </div>
-
-      {/* Table */}
+      {/* Students Table */}
       {filteredStudents.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
-          <GraduationCap className="size-12 text-muted-foreground/40" />
-          <h3 className="mt-4 text-base font-semibold">No students found</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
+        <div className="rounded-xl border bg-card p-12 text-center shadow-sm">
+          <Filter className="mx-auto size-10 text-muted-foreground/60 mb-3" />
+          <h3 className="font-semibold text-foreground">No students found</h3>
+          <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
             {hasActiveFilters
-              ? "No student matches your search or filter criteria."
-              : "No student registrations have been added yet."}
+              ? "No student matches your current filter criteria. Try clearing some filters."
+              : "No students have registered yet. Use the 'Register Student' button above to add one."}
           </p>
           {hasActiveFilters && (
             <Button
               variant="outline"
               size="sm"
-              onClick={clearFilters}
-              className="mt-4 gap-1.5"
+              onClick={resetFilters}
+              className="mt-4 text-xs"
             >
-              <X className="size-3.5" /> Clear Filters
+              Clear all filters
             </Button>
           )}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+        <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b bg-muted/60 text-xs uppercase tracking-wider text-muted-foreground">
+              <thead className="border-b bg-muted/40 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 <tr>
-                  <th className="px-4 py-3.5 font-semibold">Student Name & ID</th>
-                  <th className="px-4 py-3.5 font-semibold">Institution</th>
-                  <th className="px-4 py-3.5 font-semibold">Class & Roll</th>
-                  <th className="px-4 py-3.5 font-semibold">Scholarship</th>
-                  <th className="px-4 py-3.5 font-semibold">Registered At</th>
-                  <th className="px-4 py-3.5 text-right font-semibold">Actions</th>
+                  <th className="py-3 px-4">Student ID</th>
+                  <th className="py-3 px-4">Student Name</th>
+                  <th className="py-3 px-4">Class</th>
+                  <th className="py-3 px-4">Roll</th>
+                  <th className="py-3 px-4">Institution</th>
+                  <th className="py-3 px-4">Scholarship</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-border/50">
                 {filteredStudents.map((student) => {
-                  const isCopied = copiedId === student.studentId;
-                  const regDate = student.createdAt
-                    ? new Date(student.createdAt).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : "—";
-
                   return (
                     <tr
                       key={student.id}
-                      className="transition-colors hover:bg-muted/40"
+                      className="hover:bg-muted/30 transition-colors"
                     >
-                      {/* Name & ID */}
-                      <td className="px-4 py-3.5">
-                        <div className="font-semibold text-foreground">
-                          {student.name}
-                        </div>
-                        <div className="mt-1 flex items-center gap-1.5">
-                          <Badge
-                            variant="secondary"
-                            className="font-mono text-[11px] font-medium"
-                          >
+                      {/* Student ID with copy */}
+                      <td className="py-3 px-4 font-mono text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-primary">
                             {student.studentId}
-                          </Badge>
+                          </span>
                           <button
                             type="button"
-                            onClick={() => handleCopy(student.studentId)}
+                            onClick={() => copyToClipboard(student.studentId)}
                             title="Copy Student ID"
-                            aria-label="Copy Student ID"
-                            className="rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                            aria-label={`Copy Student ID ${student.studentId}`}
+                            className="text-muted-foreground hover:text-foreground transition-colors"
                           >
-                            {isCopied ? (
+                            {copiedId === student.studentId ? (
                               <Check className="size-3 text-green-600" />
                             ) : (
                               <Copy className="size-3" />
@@ -296,48 +289,53 @@ export default function StudentTable({
                         </div>
                       </td>
 
+                      {/* Name */}
+                      <td className="py-3 px-4 font-medium text-foreground">
+                        {student.name}
+                      </td>
+
+                      {/* Class */}
+                      <td className="py-3 px-4">
+                        <Badge variant="outline" className="text-xs">
+                          Class {student.class}
+                        </Badge>
+                      </td>
+
+                      {/* Roll */}
+                      <td className="py-3 px-4 font-mono text-xs text-muted-foreground">
+                        #{student.roll}
+                      </td>
+
                       {/* Institution */}
-                      <td className="px-4 py-3.5">
+                      <td className="py-3 px-4 text-muted-foreground">
                         <div className="font-medium text-foreground">
                           {student.institutionName}
                         </div>
                         {student.institutionEiin && (
-                          <span className="font-mono text-xs text-muted-foreground">
+                          <div className="text-[11px] text-muted-foreground/70">
                             EIIN: {student.institutionEiin}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Scholarship */}
+                      <td className="py-3 px-4">
+                        {student.scholarshipName ? (
+                          <Badge
+                            variant="secondary"
+                            className="text-xs font-normal"
+                          >
+                            {student.scholarshipName}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/50 italic">
+                            None (Direct)
                           </span>
                         )}
                       </td>
 
-                      {/* Class & Roll */}
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
-                            Class {student.class}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            Roll: <strong className="text-foreground">{student.roll}</strong>
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Scholarship */}
-                      <td className="px-4 py-3.5">
-                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-                          <GraduationCap className="size-3.5" />
-                          {student.scholarshipName ?? "Active Scholarship"}
-                        </span>
-                      </td>
-
-                      {/* Registered Date */}
-                      <td className="px-4 py-3.5 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="size-3.5 text-muted-foreground" />
-                          {regDate}
-                        </div>
-                      </td>
-
                       {/* Actions */}
-                      <td className="px-4 py-3.5 text-right">
+                      <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
@@ -359,17 +357,6 @@ export default function StudentTable({
                             className="size-8 text-muted-foreground hover:text-foreground"
                           >
                             <Pencil className="size-4" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onDelete(student)}
-                            title="Delete Student"
-                            aria-label="Delete Student"
-                            className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                          >
-                            <Trash2 className="size-4" />
                           </Button>
                         </div>
                       </td>

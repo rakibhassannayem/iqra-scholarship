@@ -1,69 +1,49 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
-import CategoryForm, {
-  type Category,
-} from "@/components/admin/scholarship-categories/CategoryForm";
+import CategoryForm from "@/components/admin/scholarship-categories/CategoryForm";
 import CategoryTable from "@/components/admin/scholarship-categories/CategoryTable";
+import type { Category } from "@/types/scholarship-category";
 
 export default function ScholarshipCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
-
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  async function fetchCategories() {
-    const response = await fetch("/api/scholarship-categories");
-    const data = await response.json();
+  const fetchCategories = useCallback(async () => {
+    setLoading(true);
 
-    if (!response.ok) {
-      throw new Error(data.message || "Failed to load categories.");
+    try {
+      const response = await fetch("/api/scholarship-categories");
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to load categories.");
+      }
+
+      setCategories(data);
+      setError("");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to load categories.",
+      );
+    } finally {
+      setLoading(false);
     }
-
-    setCategories(data);
-  }
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function initialize() {
-      try {
-        const response = await fetch("/api/scholarship-categories");
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to load categories.");
-        }
-
-        if (!cancelled) setCategories(data);
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load categories.",
-          );
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    void initialize();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void fetchCategories();
+  }, [fetchCategories]);
 
   function openCreateDialog() {
     setEditingCategory(null);
@@ -77,7 +57,7 @@ export default function ScholarshipCategoriesPage() {
   function openEditDialog(category: Category) {
     setEditingCategory(category);
     setName(category.name);
-    setDescription(category.description ?? "");
+    setDescription(category.description || "");
     setError("");
     setSuccess("");
     setDialogOpen(true);
@@ -91,15 +71,25 @@ export default function ScholarshipCategoriesPage() {
 
     try {
       const isEditing = editingCategory !== null;
+      const url = "/api/scholarship-categories";
+      const method = isEditing ? "PUT" : "POST";
+      const payload = isEditing
+        ? {
+            id: editingCategory.id,
+            name: name.trim(),
+            description: description.trim(),
+          }
+        : {
+            name: name.trim(),
+            description: description.trim(),
+          };
 
-      const response = await fetch("/api/scholarship-categories", {
-        method: isEditing ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...(isEditing ? { id: editingCategory.id } : {}),
-          name: name.trim(),
-          description: description.trim(),
-        }),
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -114,36 +104,28 @@ export default function ScholarshipCategoriesPage() {
           ? "Category updated successfully."
           : "Category created successfully.",
       );
-
       await fetchCategories();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save category.");
+      setError(
+        err instanceof Error ? err.message : "Failed to save category.",
+      );
     } finally {
       setSaving(false);
     }
   }
 
   async function handleToggleActive(category: Category) {
-    const nextActive = !category.isActive;
-
-    if (
-      !window.confirm(
-        nextActive
-          ? `Activate "${category.name}"?`
-          : `Deactivate "${category.name}"?`,
-      )
-    ) {
-      return;
-    }
-
     setUpdatingId(category.id);
     setError("");
     setSuccess("");
 
     try {
+      const nextActive = !category.isActive;
       const response = await fetch("/api/scholarship-categories", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           id: category.id,
           isActive: nextActive,
@@ -166,44 +148,6 @@ export default function ScholarshipCategoriesPage() {
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to update category.",
-      );
-    } finally {
-      setUpdatingId(null);
-    }
-  }
-
-  async function handleDelete(category: Category) {
-    if (
-      !window.confirm(
-        `Are you sure you want to delete "${category.name}"? This action cannot be undone.`,
-      )
-    ) {
-      return;
-    }
-
-    setUpdatingId(category.id);
-    setError("");
-    setSuccess("");
-
-    try {
-      const response = await fetch(
-        `/api/scholarship-categories?id=${category.id}`,
-        {
-          method: "DELETE",
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to delete category.");
-      }
-
-      setSuccess("Category deleted successfully.");
-      await fetchCategories();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to delete category.",
       );
     } finally {
       setUpdatingId(null);
@@ -246,7 +190,6 @@ export default function ScholarshipCategoriesPage() {
         updatingId={updatingId}
         onEdit={openEditDialog}
         onToggleActive={handleToggleActive}
-        onDelete={handleDelete}
       />
 
       <CategoryForm

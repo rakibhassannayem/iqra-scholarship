@@ -17,7 +17,7 @@ import {
   Calendar,
   Building,
 } from "lucide-react";
-import type { Institution } from "./InstitutionTable";
+import type { Institution } from "@/types/institution";
 
 type InstitutionDetailsModalProps = {
   institution: Institution | null;

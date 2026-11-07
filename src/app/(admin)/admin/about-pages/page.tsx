@@ -3,23 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import AboutPageForm, {
   emptyAboutPageForm,
-  type AboutPageFormValues,
 } from "@/components/admin/about-pages/AboutPageForm";
-import AboutPageTable, {
-  type AboutPageItem,
-} from "@/components/admin/about-pages/AboutPageTable";
+import AboutPageTable from "@/components/admin/about-pages/AboutPageTable";
+import type { AboutPageItem, AboutPageFormValues } from "@/types/about-page";
 
 export default function AboutPagesAdminPage() {
   const [pages, setPages] = useState<AboutPageItem[]>([]);
@@ -31,10 +19,6 @@ export default function AboutPagesAdminPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingPage, setEditingPage] = useState<AboutPageItem | null>(null);
   const [formError, setFormError] = useState("");
-
-  const [deleteTarget, setDeleteTarget] = useState<AboutPageItem | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
 
   const fetchPages = useCallback(async () => {
     setLoading(true);
@@ -168,37 +152,6 @@ export default function AboutPagesAdminPage() {
     }
   }
 
-  async function handleDeleteConfirm() {
-    if (!deleteTarget) return;
-
-    setDeleting(true);
-    setDeleteError("");
-    setError("");
-    setSuccess("");
-
-    try {
-      const response = await fetch(`/api/admin/about-pages/${deleteTarget.id}`, {
-        method: "DELETE",
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to delete page.");
-      }
-
-      setSuccess(`Page "${deleteTarget.title}" deleted successfully.`);
-      setDeleteTarget(null);
-      await fetchPages();
-    } catch (err) {
-      setDeleteError(
-        err instanceof Error ? err.message : "Failed to delete page.",
-      );
-    } finally {
-      setDeleting(false);
-    }
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -231,7 +184,6 @@ export default function AboutPagesAdminPage() {
         pages={pages}
         loading={loading}
         onEdit={openEditForm}
-        onDelete={setDeleteTarget}
         onTogglePublished={handleTogglePublished}
       />
 
@@ -254,46 +206,6 @@ export default function AboutPagesAdminPage() {
         error={formError}
         onSubmit={handleFormSubmit}
       />
-
-      <AlertDialog
-        open={Boolean(deleteTarget)}
-        onOpenChange={(open) => {
-          if (!open) {
-            setDeleteTarget(null);
-            setDeleteError("");
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete this page?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete &quot;{deleteTarget?.title}&quot;?
-              This will remove the page and its URL &quot;/about/
-              {deleteTarget?.slug}&quot; from the public website.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          {deleteError && (
-            <p className="text-sm text-destructive">{deleteError}</p>
-          )}
-
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                void handleDeleteConfirm();
-              }}
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting ? "Deleting..." : "Delete Page"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
-

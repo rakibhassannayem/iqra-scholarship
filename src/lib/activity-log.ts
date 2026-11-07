@@ -1,15 +1,8 @@
 import { db } from "@/lib/db";
 import { activityLogs } from "@/lib/db/schema";
+import type { CreateActivityLogInput } from "@/types/activity-log";
 
-type CreateActivityLogInput = {
-  userId?: number | null;
-  action: string;
-  module: string;
-  recordId?: number | null;
-  description: string;
-  previousData?: Record<string, unknown> | null;
-  newData?: Record<string, unknown> | null;
-};
+export type { CreateActivityLogInput };
 
 export async function createActivityLog(data: CreateActivityLogInput) {
   await db.insert(activityLogs).values({

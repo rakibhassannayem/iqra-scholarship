@@ -33,3 +33,13 @@ export type ActivityFilters = {
   startDate: string;
   endDate: string;
 };
+
+export type CreateActivityLogInput = {
+  userId?: number | null;
+  action: string;
+  module: string;
+  recordId?: number | null;
+  description: string;
+  previousData?: Record<string, unknown> | null;
+  newData?: Record<string, unknown> | null;
+};

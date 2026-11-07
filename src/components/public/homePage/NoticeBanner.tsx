@@ -3,11 +3,7 @@
 import Link from "next/link";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { useEffect, useState } from "react";
-
-type Notice = {
-  id: number;
-  title: string;
-};
+import type { Notice } from "@/types/notice";
 
 export default function NoticeBanner() {
   const { t } = useLanguage();

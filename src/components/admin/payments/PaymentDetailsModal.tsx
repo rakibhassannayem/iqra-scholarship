@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X, Check, Ban, Loader2 } from "lucide-react";
-import type { PaymentSubmission } from "./PaymentTable";
+import type { PaymentSubmission } from "@/types/payment";
 import Image from "next/image";
 
 type PaymentDetailsModalProps = {

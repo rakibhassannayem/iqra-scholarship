@@ -14,14 +14,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useEffect, useState } from "react";
 import RichTextEditor from "@/components/admin/editor/RichTextEditor";
+import type { AboutPageFormValues } from "@/types/about-page";
 
-export type AboutPageFormValues = {
-  title: string;
-  slug: string;
-  content: string;
-  order: number;
-  isPublished: boolean;
-};
+export type { AboutPageFormValues };
 
 export const emptyAboutPageForm: AboutPageFormValues = {
   title: "",
@@ -215,4 +210,3 @@ export default function AboutPageForm({
     </Dialog>
   );
 }
-

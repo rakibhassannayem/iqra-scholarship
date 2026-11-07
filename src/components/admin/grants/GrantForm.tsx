@@ -20,32 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Grant } from "./GrantTable";
+import type { Grant, GrantFormValues } from "@/types/grant";
+import type { Registration } from "@/types/registration";
+import type { ScholarshipCategory } from "@/types/scholarship-category";
 
-export type Registration = {
-  id: number;
-  studentDbId: number;
-  studentId: string;
-  studentName: string;
-  studentClass?: number;
-  studentRoll?: number;
-  institutionName: string;
-  scholarshipId: number;
-  scholarshipName: string;
-};
-
-export type ScholarshipCategory = {
-  id: number;
-  name: string;
-  description: string | null;
-  isActive: boolean;
-};
-
-export type GrantFormValues = {
-  studentId: number;
-  scholarshipId: number;
-  categoryId: number;
-};
+export type { Registration, ScholarshipCategory, GrantFormValues };
 
 type GrantFormProps = {
   open: boolean;

@@ -1,31 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Plus, UserPlus, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { UserPlus, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import StudentForm, {
-  type StudentFormValues,
-} from "@/components/admin/students/StudentForm";
-import StudentTable, {
-  type Student,
-} from "@/components/admin/students/StudentTable";
+import StudentTable from "@/components/admin/students/StudentTable";
+import StudentForm from "@/components/admin/students/StudentForm";
 import StudentDetailsModal from "@/components/admin/students/StudentDetailsModal";
-
-type Institution = {
-  id: number;
-  name: string;
-  eiin: string;
-};
+import type { Student, StudentFormValues } from "@/types/student";
+import type { Institution } from "@/types/institution";
 
 export default function StudentRegistrationsPage() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -36,11 +18,9 @@ export default function StudentRegistrationsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [deleteError, setDeleteError] = useState("");
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -53,7 +33,7 @@ export default function StudentRegistrationsPage() {
       ]);
 
       if (!studentsResponse.ok || !institutionsResponse.ok) {
-        throw new Error("Failed to load student registrations or institutions.");
+        throw new Error("Failed to load registrations or institutions.");
       }
 
       const [studentsData, institutionsData] = await Promise.all([
@@ -65,7 +45,7 @@ export default function StudentRegistrationsPage() {
       setInstitutions(institutionsData);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to load data.",
+        err instanceof Error ? err.message : "Failed to load student data.",
       );
     } finally {
       setLoading(false);
@@ -73,7 +53,7 @@ export default function StudentRegistrationsPage() {
   }, []);
 
   useEffect(() => {
-    fetchData();
+    void fetchData();
   }, [fetchData]);
 
   function openCreateForm() {
@@ -96,16 +76,17 @@ export default function StudentRegistrationsPage() {
     setSuccess("");
 
     try {
-      const response = await fetch(
-        editingStudent ? `/api/students/${editingStudent.id}` : "/api/students",
-        {
-          method: editingStudent ? "PATCH" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(values),
-        },
-      );
+      const isEditing = editingStudent !== null;
+      const url = isEditing
+        ? `/api/students/${editingStudent.id}`
+        : "/api/students";
+      const method = isEditing ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
 
       const data = await response.json();
 
@@ -116,7 +97,7 @@ export default function StudentRegistrationsPage() {
       setFormOpen(false);
       setEditingStudent(null);
       setSuccess(
-        editingStudent
+        isEditing
           ? "Student registration updated successfully."
           : `Student registered successfully with ID: ${data.studentId || data.student?.studentId || "Generated"}`,
       );
@@ -128,34 +109,6 @@ export default function StudentRegistrationsPage() {
       );
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleDelete() {
-    if (!deleteTarget) return;
-
-    setDeleteError("");
-
-    try {
-      const response = await fetch(`/api/students/${deleteTarget.id}`, {
-        method: "DELETE",
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to delete student registration.");
-      }
-
-      setDeleteTarget(null);
-      setSuccess("Student registration deleted successfully.");
-      await fetchData();
-    } catch (err) {
-      setDeleteError(
-        err instanceof Error
-          ? err.message
-          : "Failed to delete student registration.",
-      );
     }
   }
 
@@ -190,7 +143,7 @@ export default function StudentRegistrationsPage() {
       </div>
 
       {/* Notifications */}
-      {error && !formOpen && !deleteTarget && (
+      {error && !formOpen && (
         <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           <AlertCircle className="size-4 shrink-0" />
           <span>{error}</span>
@@ -216,10 +169,6 @@ export default function StudentRegistrationsPage() {
           institutions={institutions}
           onView={(student) => setViewingStudent(student)}
           onEdit={openEditForm}
-          onDelete={(student) => {
-            setDeleteError("");
-            setDeleteTarget(student);
-          }}
         />
       )}
 
@@ -262,47 +211,6 @@ export default function StudentRegistrationsPage() {
         error={error}
         onSubmit={handleSubmit}
       />
-
-      {/* Delete Confirmation Alert */}
-      <AlertDialog
-        open={Boolean(deleteTarget)}
-        onOpenChange={(open) => {
-          if (!open) {
-            setDeleteTarget(null);
-            setDeleteError("");
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Student Registration?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete registration for{" "}
-              <strong>{deleteTarget?.name}</strong> (Student ID:{" "}
-              <span className="font-mono">{deleteTarget?.studentId}</span>)?
-              This will remove the student record and cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          {deleteError && (
-            <p className="text-sm font-medium text-destructive">{deleteError}</p>
-          )}
-
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-
-            <AlertDialogAction
-              onClick={(event) => {
-                event.preventDefault();
-                handleDelete();
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete Registration
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2, FileText, ExternalLink } from "lucide-react";
+import { Pencil, FileText, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,23 +14,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
+import type { AboutPageItem } from "@/types/about-page";
 
-export type AboutPageItem = {
-  id: number;
-  title: string;
-  slug: string;
-  content: string;
-  order: number;
-  isPublished: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
+export type { AboutPageItem };
 
 type AboutPageTableProps = {
   pages: AboutPageItem[];
   loading: boolean;
   onEdit: (page: AboutPageItem) => void;
-  onDelete: (page: AboutPageItem) => void;
   onTogglePublished: (page: AboutPageItem, isPublished: boolean) => Promise<void>;
 };
 
@@ -50,7 +41,6 @@ export default function AboutPageTable({
   pages,
   loading,
   onEdit,
-  onDelete,
   onTogglePublished,
 }: AboutPageTableProps) {
   return (
@@ -151,16 +141,6 @@ export default function AboutPageTable({
                         >
                           <Pencil className="size-4" />
                         </Button>
-
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                          onClick={() => onDelete(page)}
-                          aria-label={`Delete ${page.title}`}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -173,4 +153,3 @@ export default function AboutPageTable({
     </Card>
   );
 }
-

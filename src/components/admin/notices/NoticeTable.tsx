@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2, BellRing } from "lucide-react";
+import { Pencil, BellRing } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,20 +14,14 @@ import {
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
+import type { Notice } from "@/types/notice";
 
-export type Notice = {
-  id: number;
-  title: string;
-  content: string;
-  isPublished: boolean;
-  createdAt: string;
-};
+export type { Notice };
 
 type NoticeTableProps = {
   notices: Notice[];
   loading: boolean;
   onEdit: (notice: Notice) => void;
-  onDelete: (notice: Notice) => void;
   onTogglePublished: (notice: Notice, isPublished: boolean) => Promise<void>;
 };
 
@@ -43,7 +37,6 @@ export default function NoticeTable({
   notices,
   loading,
   onEdit,
-  onDelete,
   onTogglePublished,
 }: NoticeTableProps) {
   return (
@@ -100,18 +93,16 @@ export default function NoticeTable({
                         onCheckedChange={(checked) => {
                           void onTogglePublished(notice, checked);
                         }}
-                        aria-label={`Publish ${notice.title}`}
                       />
-
                       <Badge
-                        variant={notice.isPublished ? "default" : "secondary"}
+                        variant={notice.isPublished ? "default" : "outline"}
                       >
                         {notice.isPublished ? "Published" : "Draft"}
                       </Badge>
                     </div>
                   </TableCell>
 
-                  <TableCell>
+                  <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
                         type="button"
@@ -121,16 +112,6 @@ export default function NoticeTable({
                         onClick={() => onEdit(notice)}
                       >
                         <Pencil className="size-4" />
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        aria-label={`Delete ${notice.title}`}
-                        onClick={() => onDelete(notice)}
-                      >
-                        <Trash2 className="size-4 text-destructive" />
                       </Button>
                     </div>
                   </TableCell>

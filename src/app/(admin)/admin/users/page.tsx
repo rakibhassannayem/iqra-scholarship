@@ -3,26 +3,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import UserForm, {
-  emptyUserForm,
-  type UserFormValues,
-} from "@/components/admin/users/UserForm";
-import UserTable, { type User } from "@/components/admin/users/UserTable";
-import { getSession } from "next-auth/react";
+import UserForm, { emptyUserForm } from "@/components/admin/users/UserForm";
+import UserTable from "@/components/admin/users/UserTable";
+import { useSession } from "next-auth/react";
+import type { User, UserFormValues } from "@/types/user";
 
 export default function UsersPage() {
+  const { data: session } = useSession();
+  const userRole = session?.user?.role || "admin";
+
   const [users, setUsers] = useState<User[]>([]);
-  const [userRole, setUserRole] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -31,10 +21,6 @@ export default function UsersPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formError, setFormError] = useState("");
-
-  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -60,15 +46,6 @@ export default function UsersPage() {
     void fetchUsers();
   }, [fetchUsers]);
 
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      const session = await getSession();
-      setUserRole(session?.user?.role ?? "");
-    };
-
-    void fetchUserRole();
-  }, []);
-
   function openCreateForm() {
     setEditingUser(null);
     setFormError("");
@@ -92,25 +69,21 @@ export default function UsersPage() {
     setSuccess("");
 
     try {
-      const isEditing = editingUser !== null;
+      const editing = editingUser !== null;
+      const url = editing ? `/api/users/${editingUser.id}` : "/api/users";
 
-      const payload = {
-        name: values.name,
-        email: values.email,
-        role: values.role,
-        ...(values.password ? { password: values.password } : {}),
-      };
+      const payload = { ...values };
+      if (editing && !payload.password) {
+        delete (payload as { password?: string }).password;
+      }
 
-      const response = await fetch(
-        isEditing ? `/api/users/${editingUser.id}` : "/api/users",
-        {
-          method: isEditing ? "PATCH" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
+      const response = await fetch(url, {
+        method: editing ? "PATCH" : "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify(payload),
+      });
 
       const data = await response.json();
 
@@ -121,46 +94,18 @@ export default function UsersPage() {
       setFormOpen(false);
       setEditingUser(null);
       setSuccess(
-        isEditing ? "User updated successfully." : "User created successfully.",
+        editing
+          ? "User updated successfully."
+          : "User created successfully.",
       );
 
       await fetchUsers();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Failed to save user.");
+      setFormError(
+        err instanceof Error ? err.message : "Failed to save user.",
+      );
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleDelete() {
-    if (!deleteTarget) return;
-
-    setDeleting(true);
-    setDeleteError("");
-    setError("");
-    setSuccess("");
-
-    try {
-      const response = await fetch(`/api/users/${deleteTarget.id}`, {
-        method: "DELETE",
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to delete user.");
-      }
-
-      setDeleteTarget(null);
-      setSuccess("User deleted successfully.");
-
-      await fetchUsers();
-    } catch (err) {
-      setDeleteError(
-        err instanceof Error ? err.message : "Failed to delete user.",
-      );
-    } finally {
-      setDeleting(false);
     }
   }
 
@@ -197,10 +142,6 @@ export default function UsersPage() {
         loading={loading}
         role={userRole}
         onEdit={openEditForm}
-        onDelete={(user) => {
-          setDeleteError("");
-          setDeleteTarget(user);
-        }}
       />
 
       <UserForm
@@ -222,48 +163,6 @@ export default function UsersPage() {
         error={formError}
         onSubmit={handleSubmit}
       />
-
-      <AlertDialog
-        open={deleteTarget !== null}
-        onOpenChange={(open) => {
-          if (!open && !deleting) {
-            setDeleteTarget(null);
-            setDeleteError("");
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete this user?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete
-              {deleteTarget ? ` "${deleteTarget.name}"` : " this user"}. This
-              action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          {deleteError && (
-            <p role="alert" className="text-sm text-destructive">
-              {deleteError}
-            </p>
-          )}
-
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-
-            <AlertDialogAction
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={(event) => {
-                event.preventDefault();
-                void handleDelete();
-              }}
-            >
-              {deleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

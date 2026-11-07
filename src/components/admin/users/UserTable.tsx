@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2, Users } from "lucide-react";
+import { Pencil, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,21 +12,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { User } from "@/types/user";
 
-export type User = {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  createdAt: string;
-};
+export type { User };
 
 type UserTableProps = {
   users: User[];
   loading: boolean;
   role: string;
   onEdit: (user: User) => void;
-  onDelete: (user: User) => void;
 };
 
 function formatDate(date: string) {
@@ -42,7 +36,6 @@ export default function UserTable({
   loading,
   role,
   onEdit,
-  onDelete,
 }: UserTableProps) {
   return (
     <Card>
@@ -63,7 +56,7 @@ export default function UserTable({
             <Users className="mx-auto size-8 text-muted-foreground" />
             <p className="mt-3 font-medium">No users yet</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Create your first user to see it here.
+              Create your first user to see them here.
             </p>
           </div>
         ) : (
@@ -82,18 +75,12 @@ export default function UserTable({
                 <TableRow key={user.id}>
                   <TableCell>
                     <p className="font-medium">{user.name}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {user.email}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
                   </TableCell>
 
                   <TableCell>
-                    <Badge
-                      variant={
-                        user.role === "superadmin" ? "default" : "secondary"
-                      }
-                    >
-                      {user.role === "superadmin" ? "Super Admin" : "Admin"}
+                    <Badge variant={user.role === "superadmin" ? "default" : "secondary"}>
+                      {user.role}
                     </Badge>
                   </TableCell>
 
@@ -101,7 +88,7 @@ export default function UserTable({
                     {formatDate(user.createdAt)}
                   </TableCell>
 
-                  <TableCell>
+                  <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       {role === "superadmin" && (
                         <Button
@@ -110,18 +97,6 @@ export default function UserTable({
                           onClick={() => onEdit(user)}
                         >
                           <Pencil className="h-4 w-4" />
-                        </Button>
-                      )}
-
-                      {role === "superadmin" && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          aria-label={`Delete ${user.name}`}
-                          onClick={() => onDelete(user)}
-                        >
-                          <Trash2 className="size-4 text-destructive" />
                         </Button>
                       )}
                     </div>

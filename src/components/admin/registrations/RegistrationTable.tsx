@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, Eye, X, ClipboardList, Trash2 } from "lucide-react";
+import { Search, Eye, X, ClipboardList } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,34 +15,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { Registration } from "@/types/registration";
 
-export type Registration = {
-  id: number;
-  studentDbId: number;
-  studentId: string;
-  studentName: string;
-  studentClass: number;
-  studentRoll: number;
-  institutionId: number;
-  institutionName: string;
-  scholarshipId: number;
-  scholarshipName: string;
-  registrationFee: number;
-  status: "Pending" | "Approved" | "Cancelled";
-  paymentStatus: "Unpaid" | "Paid";
-  registeredAt: string;
-};
+export type { Registration };
 
 type RegistrationTableProps = {
   registrations: Registration[];
   loading: boolean;
   onView: (registration: Registration) => void;
-  onDelete: (registration: Registration) => void;
 };
 
 function convertToEnglishDigits(value: string) {
   const banglaDigits = "০১২৩৪৫৬৭৮৯";
-  const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
+  const arabicDigits = "٠١٢٣٥٦٧٨٩";
 
   return value
     .replace(/[০-৯]/g, (digit) => String(banglaDigits.indexOf(digit)))
@@ -61,7 +46,6 @@ export default function RegistrationTable({
   registrations,
   loading,
   onView,
-  onDelete,
 }: RegistrationTableProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -80,18 +64,24 @@ export default function RegistrationTable({
   }, [registrations]);
 
   const filteredRegistrations = useMemo(() => {
+    const rawSearch = search.trim();
+    const normalizedSearch = convertToEnglishDigits(rawSearch).toLowerCase();
+
     return registrations.filter((registration) => {
-      const query = convertToEnglishDigits(search.trim()).toLowerCase();
+      const studentId = registration.studentId.toLowerCase();
+      const studentName = registration.studentName.toLowerCase();
+      const institutionName = registration.institutionName.toLowerCase();
+      const rollNumber = String(registration.studentRoll);
 
       const matchesSearch =
-        !query ||
-        registration.studentName.toLowerCase().includes(query) ||
-        registration.studentId.toLowerCase().includes(query) ||
-        registration.institutionName.toLowerCase().includes(query) ||
-        String(registration.studentRoll).includes(query);
+        !rawSearch ||
+        studentId.includes(normalizedSearch) ||
+        studentName.includes(rawSearch.toLowerCase()) ||
+        institutionName.includes(rawSearch.toLowerCase()) ||
+        rollNumber === normalizedSearch;
 
       const matchesStatus =
-        statusFilter === "all" || registration.status === statusFilter;
+        statusFilter === "all" || registration.paymentStatus === statusFilter;
 
       const matchesClass =
         classFilter === "all" ||
@@ -107,107 +97,100 @@ export default function RegistrationTable({
     });
   }, [registrations, search, statusFilter, classFilter, scholarshipFilter]);
 
-  const hasActiveFilters =
-    search.trim() !== "" ||
-    statusFilter !== "all" ||
-    classFilter !== "all" ||
-    scholarshipFilter !== "all";
-
-  function clearFilters() {
-    setSearch("");
-    setStatusFilter("all");
-    setClassFilter("all");
-    setScholarshipFilter("all");
-  }
-
-  function getStatusVariant(status: Registration["status"]) {
-    switch (status) {
-      case "Approved":
-        return "default";
-      case "Cancelled":
-        return "destructive";
-      default:
-        return "secondary";
-    }
-  }
-
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>All Registrations</span>
-          <Badge variant="secondary">
-            {filteredRegistrations.length} / {registrations.length}
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        {/* Search and Filters */}
-        <div className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search by student name, ID, roll or institution..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+        <CardTitle className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <span>Student Registrations</span>
+            <Badge variant="secondary">
+              {filteredRegistrations.length} of {registrations.length} total
+            </Badge>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <select
-              value={classFilter}
-              onChange={(e) => setClassFilter(e.target.value)}
-              className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-            >
-              <option value="all">All Classes</option>
-              {Array.from({ length: 10 }, (_, i) => i + 1).map((cls) => (
-                <option key={cls} value={String(cls)}>
-                  Class {cls}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={scholarshipFilter}
-              onChange={(e) => setScholarshipFilter(e.target.value)}
-              className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-            >
-              <option value="all">All Scholarships</option>
-              {scholarships.map(([id, name]) => (
-                <option key={id} value={String(id)}>
-                  {name}
-                </option>
-              ))}
-            </select>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search ID, name, roll, institution..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className="pl-9 pr-9"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
 
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
-              <option value="all">All Statuses</option>
-              <option value="Pending">Pending</option>
-              <option value="Approved">Approved</option>
-              <option value="Cancelled">Cancelled</option>
+              <option value="all">All Payment</option>
+              <option value="Paid">Paid</option>
+              <option value="Unpaid">Unpaid</option>
             </select>
 
-            {hasActiveFilters && (
+            <select
+              value={classFilter}
+              onChange={(event) => setClassFilter(event.target.value)}
+              className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              <option value="all">All Classes</option>
+              {Array.from({ length: 12 }, (_, index) => index + 1).map(
+                (classNumber) => (
+                  <option key={classNumber} value={String(classNumber)}>
+                    Class {classNumber}
+                  </option>
+                ),
+              )}
+            </select>
+
+            {scholarships.length > 0 && (
+              <select
+                value={scholarshipFilter}
+                onChange={(event) => setScholarshipFilter(event.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <option value="all">All Scholarships</option>
+                {scholarships.map(([id, name]) => (
+                  <option key={id} value={String(id)}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {(search ||
+              statusFilter !== "all" ||
+              classFilter !== "all" ||
+              scholarshipFilter !== "all") && (
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={clearFilters}
+                onClick={() => {
+                  setSearch("");
+                  setStatusFilter("all");
+                  setClassFilter("all");
+                  setScholarshipFilter("all");
+                }}
               >
-                <X className="mr-1 size-4" />
                 Reset
               </Button>
             )}
           </div>
-        </div>
+        </CardTitle>
+      </CardHeader>
 
-        {/* Loading */}
+      <CardContent>
         {loading ? (
           <p className="py-10 text-center text-sm text-muted-foreground">
             Loading registrations...
@@ -217,9 +200,12 @@ export default function RegistrationTable({
             <ClipboardList className="mx-auto size-8 text-muted-foreground" />
             <p className="mt-3 font-medium">No registrations found</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              {hasActiveFilters
-                ? "Try changing your search or filters."
-                : "Scholarship registrations will appear here."}
+              {search ||
+              statusFilter !== "all" ||
+              classFilter !== "all" ||
+              scholarshipFilter !== "all"
+                ? "Try adjusting your search filters."
+                : "No student registrations have been recorded yet."}
             </p>
           </div>
         ) : (
@@ -229,11 +215,11 @@ export default function RegistrationTable({
                 <TableRow>
                   <TableHead>Student</TableHead>
                   <TableHead>Institution</TableHead>
-                  <TableHead>Class & Roll</TableHead>
+                  <TableHead>Class</TableHead>
+                  <TableHead>Roll</TableHead>
                   <TableHead>Scholarship</TableHead>
                   <TableHead>Fee</TableHead>
                   <TableHead>Registered At</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Payment</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -243,37 +229,34 @@ export default function RegistrationTable({
                 {filteredRegistrations.map((registration) => (
                   <TableRow key={registration.id}>
                     <TableCell>
-                      <p className="font-medium">{registration.studentName}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        ID: {registration.studentId}
-                      </p>
+                      <div>
+                        <p className="font-medium">
+                          {registration.studentName}
+                        </p>
+                        <p className="font-mono text-xs text-muted-foreground">
+                          {registration.studentId}
+                        </p>
+                      </div>
                     </TableCell>
 
                     <TableCell>{registration.institutionName}</TableCell>
 
-                    <TableCell className="whitespace-nowrap">
+                    <TableCell>
                       <Badge variant="outline">
                         Class {registration.studentClass}
                       </Badge>
-                      <span className="ml-2 text-xs text-muted-foreground block mt-1">
-                        Roll: {registration.studentRoll}
-                      </span>
+                    </TableCell>
+
+                    <TableCell className="font-mono text-xs">
+                      {registration.studentRoll}
                     </TableCell>
 
                     <TableCell>{registration.scholarshipName}</TableCell>
 
-                    <TableCell className="whitespace-nowrap">
-                      ৳{registration.registrationFee.toLocaleString("en-BD")}
-                    </TableCell>
+                    <TableCell>৳{registration.registrationFee}</TableCell>
 
                     <TableCell className="whitespace-nowrap">
                       {formatDate(registration.registeredAt)}
-                    </TableCell>
-
-                    <TableCell>
-                      <Badge variant={getStatusVariant(registration.status)}>
-                        {registration.status}
-                      </Badge>
                     </TableCell>
 
                     <TableCell>
@@ -288,26 +271,16 @@ export default function RegistrationTable({
                       </Badge>
                     </TableCell>
 
-                    <TableCell>
-                      <div className="flex justify-end gap-2">
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
                         <Button
                           type="button"
-                          variant="outline"
+                          variant="ghost"
                           size="icon"
-                          aria-label="View registration"
+                          aria-label="View registration details"
                           onClick={() => onView(registration)}
                         >
                           <Eye className="size-4" />
-                        </Button>
-
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          aria-label="Delete registration"
-                          onClick={() => onDelete(registration)}
-                        >
-                          <Trash2 className="size-4" />
                         </Button>
                       </div>
                     </TableCell>

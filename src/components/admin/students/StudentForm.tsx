@@ -11,34 +11,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type {
+  StudentFormValues,
+  StudentFormInitialValues,
+} from "@/types/student";
+import type { Institution } from "@/types/institution";
+import type { Scholarship } from "@/types/scholarship";
 
-type Institution = {
-  id: number;
-  name: string;
-  eiin: string;
-};
-
-type Scholarship = {
-  id: number;
-  name: string;
-  isActive: boolean;
-};
-
-export type StudentFormValues = {
-  name: string;
-  institutionId: number;
-  scholarshipId?: number;
-  class: number;
-  roll: number;
-};
-
-export type StudentFormInitialValues = {
-  name: string;
-  institutionId: number;
-  scholarshipId?: number | null;
-  class: number;
-  roll: number;
-};
+export type { StudentFormValues, StudentFormInitialValues };
 
 type StudentFormProps = {
   open: boolean;
@@ -67,14 +47,12 @@ export default function StudentForm({
   error,
   onSubmit,
 }: StudentFormProps) {
+  const [form, setForm] = useState<StudentFormValues>(emptyForm);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [scholarships, setScholarships] = useState<Scholarship[]>([]);
-  const [form, setForm] = useState<StudentFormValues>(emptyForm);
   const [loadingData, setLoadingData] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
-
     if (initialValues) {
       setForm({
         name: initialValues.name,
@@ -84,207 +62,193 @@ export default function StudentForm({
         roll: initialValues.roll,
       });
     } else {
-      setForm({ ...emptyForm });
+      setForm(emptyForm);
     }
-  }, [open, initialValues]);
+  }, [initialValues, open]);
 
+  // Load dropdown choices
   useEffect(() => {
     if (!open) return;
 
-    async function loadOptions() {
-      setLoadingData(true);
-      try {
-        const [instRes, scholRes] = await Promise.all([
-          fetch("/api/institutions"),
-          fetch("/api/scholarships"),
-        ]);
+    let mounted = true;
+    setLoadingData(true);
 
+    Promise.all([fetch("/api/institutions"), fetch("/api/scholarships")])
+      .then(async ([instRes, schRes]) => {
+        if (!mounted) return;
         if (instRes.ok) {
           const instData = await instRes.json();
           setInstitutions(instData);
-        }
-
-        if (scholRes.ok) {
-          const scholData = await scholRes.json();
-          setScholarships(scholData);
-
-          // If adding new student and no scholarship selected, preselect active scholarship
-          if (!initialValues) {
-            const active = scholData.find((s: Scholarship) => s.isActive);
-            if (active) {
-              setForm((prev) => ({ ...prev, scholarshipId: active.id }));
-            }
+          if (!initialValues && instData.length > 0 && form.institutionId === 0) {
+            setForm((prev) => ({ ...prev, institutionId: instData[0].id }));
           }
         }
-      } catch (err) {
-        console.error("Failed to load options:", err);
-      } finally {
-        setLoadingData(false);
-      }
-    }
+        if (schRes.ok) {
+          const schData = await schRes.json();
+          setScholarships(schData);
+        }
+      })
+      .catch((err) => console.error(err))
+      .finally(() => {
+        if (mounted) setLoadingData(false);
+      });
 
-    loadOptions();
+    return () => {
+      mounted = false;
+    };
   }, [open, initialValues]);
 
-  function handleChange(field: keyof StudentFormValues, value: string) {
-    if (field === "name") {
-      setForm((previous) => ({
-        ...previous,
-        name: value,
-      }));
-      return;
-    }
-
-    // Convert Bangla digits to English digits
-    const normalizedValue = value.replace(/[০-৯]/g, (digit) =>
-      String(digit.charCodeAt(0) - 0x09e6),
-    );
-
-    setForm((previous) => ({
-      ...previous,
-      [field]: Number(normalizedValue),
-    }));
-  }
-
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    onSubmit({
-      ...form,
-      name: form.name.trim(),
-    });
-  }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.institutionId) return;
+    onSubmit(form);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {editing ? "Edit Student Registration" : "Register New Student"}
+            {editing ? "Edit Student Registration" : "Register Student"}
           </DialogTitle>
-
           <DialogDescription>
             {editing
-              ? "Update the student registration and academic details."
-              : "Enter the student details to register for a scholarship."}
+              ? "Update the student's information and institutional allocation."
+              : "Enter student details to generate their unique scholarship ID."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="student-name">Student Name *</Label>
+          {/* Name */}
+          <div className="space-y-1.5">
+            <Label htmlFor="name">Full Name</Label>
             <Input
-              id="student-name"
-              value={form.name}
-              onChange={(event) => handleChange("name", event.target.value)}
-              placeholder="e.g. Abdullah Al Mamun"
+              id="name"
               required
+              placeholder="e.g. Abdullah Al Mamun"
+              value={form.name}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, name: e.target.value }))
+              }
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="student-institution">
-              Institution / Madrasa / School *
-            </Label>
+          {/* Institution */}
+          <div className="space-y-1.5">
+            <Label htmlFor="institution">Educational Institution</Label>
             <select
-              id="student-institution"
-              value={form.institutionId || ""}
-              onChange={(event) =>
-                handleChange("institutionId", event.target.value)
-              }
+              id="institution"
               required
-              disabled={loadingData || saving}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              disabled={loadingData}
+              value={form.institutionId || ""}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  institutionId: Number(e.target.value),
+                }))
+              }
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
             >
               <option value="" disabled>
-                {loadingData ? "Loading institutions..." : "Select institution"}
+                {loadingData ? "Loading institutions..." : "Select an institution"}
               </option>
-
-              {institutions.map((institution) => (
-                <option key={institution.id} value={institution.id}>
-                  {institution.name} (EIIN: {institution.eiin})
+              {institutions.map((inst) => (
+                <option key={inst.id} value={inst.id}>
+                  {inst.name} ({inst.eiin})
                 </option>
               ))}
             </select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="student-scholarship">Scholarship Program</Label>
-            <select
-              id="student-scholarship"
-              value={form.scholarshipId || ""}
-              onChange={(event) =>
-                handleChange("scholarshipId", event.target.value)
-              }
-              disabled={loadingData || saving}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">Default Active Scholarship</option>
-              {scholarships.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} {s.isActive ? " (Active)" : " (Inactive)"}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="student-class">Class (1 - 10) *</Label>
+          {/* Class & Roll */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="class">Class</Label>
               <select
-                id="student-class"
-                value={form.class}
-                onChange={(event) => handleChange("class", event.target.value)}
+                id="class"
                 required
-                disabled={saving}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={form.class}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    class: Number(e.target.value),
+                  }))
+                }
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
               >
-                {Array.from({ length: 10 }, (_, index) => index + 1).map(
-                  (classNumber) => (
-                    <option key={classNumber} value={classNumber}>
-                      Class {classNumber}
-                    </option>
-                  ),
-                )}
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((cls) => (
+                  <option key={cls} value={cls}>
+                    Class {cls}
+                  </option>
+                ))}
               </select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="student-roll">Roll Number *</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="roll">Roll Number</Label>
               <Input
-                id="student-roll"
-                type="text"
-                value={form.roll || ""}
-                onChange={(event) => handleChange("roll", event.target.value)}
-                placeholder="e.g. 15"
+                id="roll"
+                type="number"
+                min={1}
                 required
+                value={form.roll || ""}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    roll: Number(e.target.value),
+                  }))
+                }
               />
             </div>
           </div>
 
+          {/* Scholarship Program (Optional) */}
+          <div className="space-y-1.5">
+            <Label htmlFor="scholarship">
+              Assign to Scholarship <span className="text-xs text-muted-foreground">(Optional)</span>
+            </Label>
+            <select
+              id="scholarship"
+              disabled={loadingData}
+              value={form.scholarshipId || ""}
+              onChange={(e) => {
+                const val = e.target.value ? Number(e.target.value) : undefined;
+                setForm((prev) => ({ ...prev, scholarshipId: val }));
+              }}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="">None (Register directly without specific exam)</option>
+              {scholarships.map((sch) => (
+                <option key={sch.id} value={sch.id}>
+                  {sch.name} {sch.isActive ? "(Active)" : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Error Message */}
           {error && (
-            <p className="text-sm font-medium text-destructive">{error}</p>
+            <p className="rounded-md bg-destructive/10 p-2 text-xs font-medium text-destructive">
+              {error}
+            </p>
           )}
 
-          <div className="flex justify-end gap-2 border-t pt-4">
+          {/* Actions */}
+          <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
               disabled={saving}
+              onClick={() => onOpenChange(false)}
             >
               Cancel
             </Button>
-
-            <Button
-              type="submit"
-              disabled={saving || loadingData || institutions.length === 0}
-            >
+            <Button type="submit" disabled={saving}>
               {saving
                 ? "Saving..."
                 : editing
                   ? "Update Registration"
-                  : "Register Student"}
+                  : "Complete Registration"}
             </Button>
           </div>
         </form>

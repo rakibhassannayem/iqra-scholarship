@@ -211,34 +211,6 @@ export default function ActivityHistoryPage() {
     fetchSummary();
   };
 
-  // Delete activity log
-  const handleDeleteLog = async (id: number) => {
-    const response = await fetch(`/api/activity-logs/${id}`, {
-      method: "DELETE",
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Failed to delete activity log.");
-    }
-
-    setLogs((prev) => prev.filter((log) => log.id !== id));
-
-    setPagination((prev) => ({
-      ...prev,
-      total: Math.max(0, prev.total - 1),
-      totalPages: Math.ceil(Math.max(0, prev.total - 1) / prev.limit),
-    }));
-
-    await fetchSummary();
-
-    toast.add({
-      title: "Activity log deleted successfully.",
-      type: "success",
-    });
-  };
-
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -284,7 +256,6 @@ export default function ActivityHistoryPage() {
         search={filters.search}
         role={userRole}
         onView={setSelectedLog}
-        onDelete={handleDeleteLog}
       />
 
       {/* Pagination */}

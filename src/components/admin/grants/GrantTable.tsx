@@ -32,28 +32,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export type Grant = {
-  id: number;
-  studentDbId: number;
-  studentId: string;
-  studentName: string;
-  studentClass?: number;
-  studentRoll?: number;
-  institutionName: string;
-  institutionEiin?: string;
-  scholarshipId: number;
-  scholarshipName: string;
-  academicYear?: string;
-  categoryId: number;
-  categoryName: string;
-  status: string;
-  prizeStatus: string;
-  prizeReceivedAt?: string | null;
-  confirmedBy?: string | null;
-  prizeNotes?: string | null;
-  grantedAt: string;
-  createdAt: string;
-};
+import type { Grant } from "@/types/grant";
+
+export type { Grant };
 
 type GrantTableProps = {
   grants: Grant[];

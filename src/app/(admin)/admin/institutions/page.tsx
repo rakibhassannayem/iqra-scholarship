@@ -3,30 +3,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import InstitutionForm, {
   emptyInstitutionForm,
-  type InstitutionFormValues,
 } from "@/components/admin/institutions/InstitutionForm";
-import InstitutionTable, {
-  type Institution,
-} from "@/components/admin/institutions/InstitutionTable";
+import InstitutionTable from "@/components/admin/institutions/InstitutionTable";
 import InstitutionDetailsModal from "@/components/admin/institutions/InstitutionDetailsModal";
+import type { Institution, InstitutionFormValues } from "@/types/institution";
 
 export default function InstitutionsPage() {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -38,8 +25,6 @@ export default function InstitutionsPage() {
     useState<Institution | null>(null);
   const [formValues, setFormValues] =
     useState<InstitutionFormValues>(emptyInstitutionForm);
-
-  const [deleteTarget, setDeleteTarget] = useState<Institution | null>(null);
 
   const fetchInstitutions = useCallback(async () => {
     setLoading(true);
@@ -69,7 +54,7 @@ export default function InstitutionsPage() {
 
   function openCreateForm() {
     setEditingInstitution(null);
-    setFormValues({ ...emptyInstitutionForm });
+    setFormValues(emptyInstitutionForm);
     setError("");
     setSuccess("");
     setFormOpen(true);
@@ -80,16 +65,16 @@ export default function InstitutionsPage() {
     setFormValues({
       name: institution.name,
       eiin: institution.eiin,
-      principal: institution.principal || "",
-      principalPhone: institution.principalPhone || "",
-      representative: institution.representative || "",
-      representativePhone: institution.representativePhone || "",
-      division: institution.division || "",
-      district: institution.district || "",
-      upazila: institution.upazila || "",
-      village: institution.village || "",
-      block: institution.block || "",
-      address: institution.address || "",
+      principal: institution.principal ?? "",
+      principalPhone: institution.principalPhone ?? "",
+      representative: institution.representative ?? "",
+      representativePhone: institution.representativePhone ?? "",
+      division: institution.division ?? "",
+      district: institution.district ?? "",
+      upazila: institution.upazila ?? "",
+      village: institution.village ?? "",
+      block: institution.block ?? "",
+      address: institution.address ?? "",
     });
     setError("");
     setSuccess("");
@@ -102,20 +87,17 @@ export default function InstitutionsPage() {
     setSuccess("");
 
     try {
-      const editing = editingInstitution !== null;
+      const isEditing = editingInstitution !== null;
+      const url = isEditing
+        ? `/api/institutions/${editingInstitution.id}`
+        : "/api/institutions";
+      const method = isEditing ? "PUT" : "POST";
 
-      const response = await fetch(
-        editing
-          ? `/api/institutions/${editingInstitution.id}`
-          : "/api/institutions",
-        {
-          method: editing ? "PATCH" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(values),
-        },
-      );
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
 
       const data = await response.json();
 
@@ -124,12 +106,10 @@ export default function InstitutionsPage() {
       }
 
       setFormOpen(false);
-      setEditingInstitution(null);
-
       setSuccess(
-        editing
-          ? `Institution "${values.name}" updated successfully.`
-          : `Institution "${values.name}" created successfully.`,
+        isEditing
+          ? "Institution updated successfully."
+          : "Institution added successfully.",
       );
 
       await fetchInstitutions();
@@ -139,37 +119,6 @@ export default function InstitutionsPage() {
       );
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleDelete() {
-    if (!deleteTarget) return;
-
-    setDeleting(true);
-    setError("");
-    setSuccess("");
-
-    try {
-      const response = await fetch(`/api/institutions/${deleteTarget.id}`, {
-        method: "DELETE",
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to delete institution.");
-      }
-
-      setDeleteTarget(null);
-      setSuccess("Institution deleted successfully.");
-
-      await fetchInstitutions();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to delete institution.",
-      );
-    } finally {
-      setDeleting(false);
     }
   }
 
@@ -224,7 +173,6 @@ export default function InstitutionsPage() {
         loading={loading}
         onView={(inst) => setViewingInstitution(inst)}
         onEdit={openEditForm}
-        onDelete={setDeleteTarget}
       />
 
       {/* Details View Modal */}
@@ -251,42 +199,6 @@ export default function InstitutionsPage() {
         error={formOpen ? error : ""}
         onSubmit={handleSubmit}
       />
-
-      {/* Delete Confirmation Alert */}
-      <AlertDialog
-        open={deleteTarget !== null}
-        onOpenChange={(open) => {
-          if (!open && !deleting) {
-            setDeleteTarget(null);
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete institution?</AlertDialogTitle>
-
-            <AlertDialogDescription>
-              Are you sure you want to delete &quot;
-              {deleteTarget?.name}&quot;? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-
-            <AlertDialogAction
-              disabled={deleting}
-              onClick={(event) => {
-                event.preventDefault();
-                void handleDelete();
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting ? "Deleting..." : "Delete Institution"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

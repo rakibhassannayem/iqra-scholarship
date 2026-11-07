@@ -4,12 +4,7 @@ import { useLanguage } from "@/i18n/LanguageProvider";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, BookOpen } from "lucide-react";
-
-type SubPage = {
-  id: number;
-  title: string;
-  slug: string;
-};
+import type { SubPage } from "@/types/about-page";
 
 export default function AboutContent() {
   const { language } = useLanguage();

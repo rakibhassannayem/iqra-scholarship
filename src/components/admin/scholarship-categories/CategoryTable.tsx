@@ -5,7 +5,6 @@ import {
   RefreshCw,
   ToggleLeft,
   ToggleRight,
-  Trash2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Category } from "./CategoryForm";
+import type { Category } from "@/types/scholarship-category";
 
 type CategoryTableProps = {
   categories: Category[];
@@ -25,7 +24,6 @@ type CategoryTableProps = {
   updatingId: number | null;
   onEdit: (category: Category) => void;
   onToggleActive: (category: Category) => void;
-  onDelete: (category: Category) => void;
 };
 
 export default function CategoryTable({
@@ -34,7 +32,6 @@ export default function CategoryTable({
   updatingId,
   onEdit,
   onToggleActive,
-  onDelete,
 }: CategoryTableProps) {
   if (loading) {
     return (
@@ -72,7 +69,9 @@ export default function CategoryTable({
               <TableRow key={category.id}>
                 <TableCell className="font-medium">{category.name}</TableCell>
 
-                <TableCell>{category.description || "—"}</TableCell>
+                <TableCell className="max-w-md text-sm text-muted-foreground">
+                  {category.description || "—"}
+                </TableCell>
 
                 <TableCell>
                   <Badge variant={category.isActive ? "default" : "secondary"}>
@@ -80,12 +79,11 @@ export default function CategoryTable({
                   </Badge>
                 </TableCell>
 
-                <TableCell>
+                <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={updating}
                       onClick={() => onEdit(category)}
                     >
                       <Pencil />
@@ -106,14 +104,6 @@ export default function CategoryTable({
                         <ToggleRight />
                       )}
                       {category.isActive ? "Deactivate" : "Activate"}
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      disabled={updating}
-                      onClick={() => onDelete(category)}
-                    >
-                      <Trash2 />
                     </Button>
                   </div>
                 </TableCell>

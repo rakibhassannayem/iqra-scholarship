@@ -4,28 +4,9 @@ import { useEffect, useState } from "react";
 import { CreditCard } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageProvider";
 
-type Institution = {
-  id: number;
-  name: string;
-  eiin: string;
-};
-
-type Scholarship = {
-  id: number;
-  name: string;
-  academicYear: string;
-};
-
-type Registration = {
-  id: number;
-  studentId: string;
-  studentName: string;
-  studentClass: number;
-  studentRoll: number;
-  registrationFee: number;
-  status: string;
-  paymentStatus: string;
-};
+import type { Institution } from "@/types/institution";
+import type { Scholarship } from "@/types/scholarship";
+import type { Registration } from "@/types/registration";
 
 export default function PaymentForm() {
   const { language } = useLanguage();
@@ -464,7 +445,7 @@ export default function PaymentForm() {
                 ) : eligibleRegistrations.length === 0 ? (
                   <p className="rounded-lg border p-6 text-center text-sm text-muted-foreground">
                     {isBangla
-                      ? "এই বৃত্তির জন্য কোনো অপরিশোধিত নিবন্ধন নেই।"
+                      ? "এই বৃত্তির জন্য কোনো সবার ফি পরিশোধ করা হয়েছে।"
                       : "No unpaid registrations found for this scholarship."}
                   </p>
                 ) : (
@@ -542,8 +523,8 @@ export default function PaymentForm() {
                               </td>
 
                               <td className="px-4 py-3">
-                                <span className="text-blue-600">
-                                  {isBangla ? "অপরিশোধিত" : "Unpaid"}
+                                <span className="text-red-600">
+                                  {isBangla ? "ফি-বাকি" : "Unpaid"}
                                 </span>
                               </td>
                             </tr>

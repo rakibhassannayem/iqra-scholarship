@@ -14,12 +14,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
+import type { NoticeFormValues } from "@/types/notice";
 
-export type NoticeFormValues = {
-  title: string;
-  content: string;
-  isPublished: boolean;
-};
+export type { NoticeFormValues };
 
 export const emptyNoticeForm: NoticeFormValues = {
   title: "",

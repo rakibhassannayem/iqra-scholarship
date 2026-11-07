@@ -3,23 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import ScholarshipForm, {
   emptyScholarshipForm,
-  type ScholarshipFormValues,
 } from "@/components/admin/scholarships/ScholarshipForm";
-import ScholarshipTable, {
-  type Scholarship,
-} from "@/components/admin/scholarships/ScholarshipTable";
+import ScholarshipTable from "@/components/admin/scholarships/ScholarshipTable";
+import type { Scholarship, ScholarshipFormValues } from "@/types/scholarship";
 
 function toDateInput(date: string) {
   return new Date(date).toISOString().slice(0, 10);
@@ -38,9 +26,6 @@ export default function ScholarshipsPage() {
   const [formValues, setFormValues] =
     useState<ScholarshipFormValues>(emptyScholarshipForm);
 
-  const [deleteTarget, setDeleteTarget] = useState<Scholarship | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
   const [togglingId, setTogglingId] = useState<number | null>(null);
 
   const fetchScholarships = useCallback(async () => {
@@ -71,7 +56,7 @@ export default function ScholarshipsPage() {
 
   function openCreateForm() {
     setEditingScholarship(null);
-    setFormValues({ ...emptyScholarshipForm });
+    setFormValues(emptyScholarshipForm);
     setError("");
     setSuccess("");
     setFormOpen(true);
@@ -97,33 +82,16 @@ export default function ScholarshipsPage() {
     setFormOpen(true);
   }
 
-  async function handleToggleActive(
-    scholarship: Scholarship,
-    nextActive: boolean,
-  ) {
+  async function handleToggleActive(scholarship: Scholarship, active: boolean) {
     setTogglingId(scholarship.id);
     setError("");
     setSuccess("");
-
-    // Optimistically update: only ONE scholarship can be active at a time
-    const previousScholarships = scholarships;
-    setScholarships((prev) =>
-      prev.map((s) => {
-        if (nextActive) {
-          // If turning this one ON, set this one to true and all others to false
-          return { ...s, isActive: s.id === scholarship.id };
-        } else {
-          // If turning this one OFF, only deactivate this one
-          return s.id === scholarship.id ? { ...s, isActive: false } : s;
-        }
-      }),
-    );
 
     try {
       const response = await fetch(`/api/scholarships/${scholarship.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: nextActive }),
+        body: JSON.stringify({ isActive: active }),
       });
 
       const data = await response.json();
@@ -133,14 +101,13 @@ export default function ScholarshipsPage() {
       }
 
       setSuccess(
-        nextActive
-          ? `"${scholarship.name}" is now active. All other scholarships are inactive.`
-          : `"${scholarship.name}" is now inactive.`,
+        active
+          ? `"${scholarship.name}" is now the active scholarship.`
+          : `"${scholarship.name}" has been deactivated.`,
       );
 
       await fetchScholarships();
     } catch (err) {
-      setScholarships(previousScholarships);
       setError(
         err instanceof Error
           ? err.message
@@ -158,16 +125,23 @@ export default function ScholarshipsPage() {
 
     try {
       const editing = editingScholarship !== null;
+      const url = editing
+        ? `/api/scholarships/${editingScholarship.id}`
+        : "/api/scholarships";
 
       const response = await fetch(
+        url,
         editing
-          ? `/api/scholarships/${editingScholarship.id}`
-          : "/api/scholarships",
-        {
-          method: editing ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
-        },
+          ? {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(values),
+            }
+          : {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...values, isActive: false }),
+            },
       );
 
       const data = await response.json();
@@ -191,36 +165,6 @@ export default function ScholarshipsPage() {
       );
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleDelete() {
-    if (!deleteTarget) return;
-
-    setDeleting(true);
-    setDeleteError("");
-    setError("");
-    setSuccess("");
-
-    try {
-      const response = await fetch(`/api/scholarships/${deleteTarget.id}`, {
-        method: "DELETE",
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to delete scholarship.");
-      }
-
-      setDeleteTarget(null);
-      setSuccess("Scholarship deleted successfully.");
-      await fetchScholarships();
-    } catch (err) {
-      setDeleteError(
-        err instanceof Error ? err.message : "Failed to delete scholarship.",
-      );
-    } finally {
-      setDeleting(false);
     }
   }
 
@@ -257,10 +201,6 @@ export default function ScholarshipsPage() {
         scholarships={scholarships}
         loading={loading}
         onEdit={openEditForm}
-        onDelete={(scholarship) => {
-          setDeleteError("");
-          setDeleteTarget(scholarship);
-        }}
         onToggleActive={handleToggleActive}
         togglingId={togglingId}
       />
@@ -275,44 +215,6 @@ export default function ScholarshipsPage() {
         error={error}
         onSubmit={handleSubmit}
       />
-
-      <AlertDialog
-        open={deleteTarget !== null}
-        onOpenChange={(open) => {
-          if (!open && !deleting) {
-            setDeleteTarget(null);
-            setDeleteError("");
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete scholarship?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete &quot;
-              {deleteTarget?.name}&quot;? This action cannot be undone.
-            </AlertDialogDescription>
-            {deleteError && (
-              <p role="alert" className="text-sm text-destructive">
-                {deleteError}
-              </p>
-            )}
-          </AlertDialogHeader>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={deleting}
-              onClick={(event) => {
-                event.preventDefault();
-                void handleDelete();
-              }}
-            >
-              {deleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

@@ -11,15 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import type { Category } from "@/types/scholarship-category";
 
-export type Category = {
-  id: number;
-  name: string;
-  description: string | null;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
+export type { Category };
 
 type CategoryFormProps = {
   open: boolean;

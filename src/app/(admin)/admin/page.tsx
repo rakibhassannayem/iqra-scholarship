@@ -9,13 +9,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 
-type DashboardStats = {
-  totalStudents: number;
-  totalInstitutions: number;
-  totalScholarships: number;
-  activeScholarships: number;
-  totalRegistrations: number;
-};
+import type { DashboardStats } from "@/types/dashboard";
 
 const statCards = [
   {
