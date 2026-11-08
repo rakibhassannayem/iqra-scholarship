@@ -59,6 +59,7 @@ import {
   ShowBlocks,
 } from "ckeditor5";
 import "ckeditor5/ckeditor5.css";
+import "./editor.css";
 
 export type CKEditorProps = {
   value: string;
@@ -74,7 +75,7 @@ export default function CKEditorInner({
   disabled = false,
 }: CKEditorProps) {
   return (
-    <div className="prose max-w-none text-foreground ck-custom-container w-full overflow-hidden [&_.ck-editor__editable]:min-h-[340px] [&_.ck-editor__editable]:max-h-[600px] [&_.ck-editor__editable]:overflow-y-auto [&_.ck-editor__editable]:bg-background [&_.ck-editor__editable]:text-foreground [&_.ck-toolbar]:bg-muted/40 [&_.ck-toolbar]:border-border [&_.ck.ck-editor__main>.ck-editor__editable]:border-border [&_.ck.ck-toolbar]:!flex-wrap [&_.ck-toolbar__items]:!flex-wrap [&_.ck-toolbar]:!w-full [&_.ck-editor]:!w-full [&_.ck-editor]:!max-w-full">
+    <div className="prose max-w-none text-foreground ck-custom-container w-full overflow-visible [&_.ck-editor__editable]:min-h-[340px] [&_.ck-editor__editable]:max-h-[600px] [&_.ck-editor__editable]:overflow-y-auto [&_.ck-editor__editable]:bg-background [&_.ck-editor__editable]:text-foreground [&_.ck-toolbar]:bg-muted/40 [&_.ck-toolbar]:border-border [&_.ck.ck-editor__main>.ck-editor__editable]:border-border [&_.ck.ck-toolbar]:!flex-wrap [&_.ck-toolbar__items]:!flex-wrap [&_.ck-toolbar]:!w-full [&_.ck-editor]:!w-full [&_.ck-editor]:!max-w-full">
       <CKEditor
         editor={ClassicEditor}
         disabled={disabled}
