@@ -11,7 +11,8 @@ type DynamicAboutPageProps = {
 };
 
 export async function generateMetadata({ params }: DynamicAboutPageProps) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeURIComponent(rawSlug);
 
   const [page] = await db
     .select({ title: aboutPages.title })
@@ -31,7 +32,8 @@ export async function generateMetadata({ params }: DynamicAboutPageProps) {
 export default async function DynamicAboutPage({
   params,
 }: DynamicAboutPageProps) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeURIComponent(rawSlug);
 
   const [page] = await db
     .select()

@@ -3,6 +3,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/components/ui/toast";
 import AboutPageForm, {
   emptyAboutPageForm,
 } from "@/components/admin/about-pages/AboutPageForm";
@@ -13,16 +24,17 @@ export default function AboutPagesAdminPage() {
   const [pages, setPages] = useState<AboutPageItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingPage, setEditingPage] = useState<AboutPageItem | null>(null);
   const [formError, setFormError] = useState("");
 
+  // Delete state
+  const [deleteTarget, setDeleteTarget] = useState<AboutPageItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const fetchPages = useCallback(async () => {
     setLoading(true);
-    setError("");
 
     try {
       const response = await fetch("/api/admin/about-pages");
@@ -34,9 +46,12 @@ export default function AboutPagesAdminPage() {
 
       setPages(data);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load about pages.",
-      );
+      toast.add({
+        title: "Error",
+        description:
+          err instanceof Error ? err.message : "Failed to load about pages.",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -49,16 +64,12 @@ export default function AboutPagesAdminPage() {
   function openCreateForm() {
     setEditingPage(null);
     setFormError("");
-    setError("");
-    setSuccess("");
     setFormOpen(true);
   }
 
   function openEditForm(page: AboutPageItem) {
     setEditingPage(page);
     setFormError("");
-    setError("");
-    setSuccess("");
     setFormOpen(true);
   }
 
@@ -66,9 +77,6 @@ export default function AboutPagesAdminPage() {
     page: AboutPageItem,
     isPublished: boolean,
   ) {
-    setError("");
-    setSuccess("");
-
     // Optimistic UI update
     setPages((current) =>
       current.map((item) =>
@@ -95,9 +103,11 @@ export default function AboutPagesAdminPage() {
         throw new Error(data.message || "Failed to update page status.");
       }
 
-      setSuccess(
-        `"${page.title}" is now ${isPublished ? "published" : "draft"}.`,
-      );
+      toast.add({
+        title: "Status Updated",
+        description: `"${page.title}" is now ${isPublished ? "published" : "draft"}.`,
+        type: "success",
+      });
     } catch (err) {
       // Revert on error
       setPages((current) =>
@@ -105,17 +115,18 @@ export default function AboutPagesAdminPage() {
           item.id === page.id ? { ...item, isPublished: page.isPublished } : item,
         ),
       );
-      setError(
-        err instanceof Error ? err.message : "Failed to update page status.",
-      );
+      toast.add({
+        title: "Error",
+        description:
+          err instanceof Error ? err.message : "Failed to update page status.",
+        type: "error",
+      });
     }
   }
 
   async function handleFormSubmit(values: AboutPageFormValues) {
     setSaving(true);
     setFormError("");
-    setError("");
-    setSuccess("");
 
     try {
       const isEditing = Boolean(editingPage);
@@ -137,11 +148,13 @@ export default function AboutPagesAdminPage() {
       }
 
       setFormOpen(false);
-      setSuccess(
-        isEditing
+      toast.add({
+        title: isEditing ? "Page Updated" : "Page Created",
+        description: isEditing
           ? `Page "${values.title}" updated successfully.`
           : `Page "${values.title}" created successfully.`,
-      );
+        type: "success",
+      });
       await fetchPages();
     } catch (err) {
       setFormError(
@@ -149,6 +162,43 @@ export default function AboutPagesAdminPage() {
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDeletePage() {
+    if (!deleteTarget) return;
+
+    setDeleting(true);
+
+    try {
+      const response = await fetch(
+        `/api/admin/about-pages/${deleteTarget.id}`,
+        { method: "DELETE" },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete page.");
+      }
+
+      toast.add({
+        title: "Page Deleted",
+        description: `"${deleteTarget.title}" has been deleted.`,
+        type: "success",
+      });
+
+      setDeleteTarget(null);
+      await fetchPages();
+    } catch (err) {
+      toast.add({
+        title: "Delete Failed",
+        description:
+          err instanceof Error ? err.message : "Failed to delete page.",
+        type: "error",
+      });
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -168,22 +218,11 @@ export default function AboutPagesAdminPage() {
         </Button>
       </div>
 
-      {error && (
-        <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-600 dark:text-emerald-400">
-          {success}
-        </div>
-      )}
-
       <AboutPageTable
         pages={pages}
         loading={loading}
         onEdit={openEditForm}
+        onDelete={setDeleteTarget}
         onTogglePublished={handleTogglePublished}
       />
 
@@ -206,6 +245,34 @@ export default function AboutPagesAdminPage() {
         error={formError}
         onSubmit={handleFormSubmit}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete About Page</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{deleteTarget?.title}&quot;?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePage}
+              disabled={deleting}
+              variant="destructive"
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

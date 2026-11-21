@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, FileText, ExternalLink } from "lucide-react";
+import { Pencil, FileText, ExternalLink, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ type AboutPageTableProps = {
   pages: AboutPageItem[];
   loading: boolean;
   onEdit: (page: AboutPageItem) => void;
+  onDelete: (page: AboutPageItem) => void;
   onTogglePublished: (page: AboutPageItem, isPublished: boolean) => Promise<void>;
 };
 
@@ -41,6 +42,7 @@ export default function AboutPageTable({
   pages,
   loading,
   onEdit,
+  onDelete,
   onTogglePublished,
 }: AboutPageTableProps) {
   return (
@@ -140,6 +142,15 @@ export default function AboutPageTable({
                           aria-label={`Edit ${page.title}`}
                         >
                           <Pencil className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onDelete(page)}
+                          aria-label={`Delete ${page.title}`}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="size-4" />
                         </Button>
                       </div>
                     </TableCell>
