@@ -1,6 +1,6 @@
 {
-  "id": "c2d09b05-45ec-4944-9780-13b95cf7175a",
-  "prevId": "60911c36-9556-4392-b444-0cf9742f1014",
+  "id": "07e2d54c-4815-4174-983e-813f5be96c04",
+  "prevId": "c2d09b05-45ec-4944-9780-13b95cf7175a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -505,6 +505,132 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.results": {
+      "name": "results",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scholarship_id": {
+          "name": "scholarship_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "marks": {
+          "name": "marks",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'not-awarded'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "student_scholarship_result_unique": {
+          "name": "student_scholarship_result_unique",
+          "columns": [
+            {
+              "expression": "student_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "scholarship_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "results_student_id_students_id_fk": {
+          "name": "results_student_id_students_id_fk",
+          "tableFrom": "results",
+          "tableTo": "students",
+          "columnsFrom": [
+            "student_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "results_scholarship_id_scholarships_id_fk": {
+          "name": "results_scholarship_id_scholarships_id_fk",
+          "tableFrom": "results",
+          "tableTo": "scholarships",
+          "columnsFrom": [
+            "scholarship_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "results_category_id_scholarship_categories_id_fk": {
+          "name": "results_category_id_scholarship_categories_id_fk",
+          "tableFrom": "results",
+          "tableTo": "scholarship_categories",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.scholarship_categories": {
       "name": "scholarship_categories",
       "schema": "",
@@ -524,6 +650,18 @@
         "description": {
           "name": "description",
           "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "min_marks": {
+          "name": "min_marks",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "max_marks": {
+          "name": "max_marks",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
