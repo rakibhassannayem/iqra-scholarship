@@ -112,6 +112,17 @@ function ResultCard({
           </div>
         )}
 
+        {student.result.marks !== null && student.result.marks !== undefined && (
+          <div className="rounded-xl border bg-background p-4 sm:col-span-2">
+            <p className="text-xs text-muted-foreground">
+              {isBangla ? "প্রাপ্ত নম্বর" : "Obtained Marks"}
+            </p>
+            <p className="mt-1.5 text-lg font-bold">
+              {isBangla ? `${student.result.marks} নম্বর` : `${student.result.marks} Marks`}
+            </p>
+          </div>
+        )}
+
         {/* Status badge */}
         <div
           className={`flex items-center gap-3 rounded-xl border p-4 sm:col-span-2 ${statusConfig.bg} ${statusConfig.border}`}
@@ -496,6 +507,9 @@ export default function ResultLookup() {
                           {isBangla ? "রোল" : "Roll"}
                         </th>
                         <th className="px-4 py-3 font-semibold">
+                          {isBangla ? "নম্বর" : "Marks"}
+                        </th>
+                        <th className="px-4 py-3 font-semibold">
                           {isBangla ? "ফলাফল" : "Result"}
                         </th>
                         <th className="px-4 py-3 text-right font-semibold">
@@ -532,6 +546,11 @@ export default function ResultLookup() {
                             </td>
                             <td className="px-4 py-3">{student.name}</td>
                             <td className="px-4 py-3">{student.roll}</td>
+                            <td className="px-4 py-3 font-mono text-xs font-semibold">
+                              {student.result.marks !== null && student.result.marks !== undefined
+                                ? student.result.marks
+                                : "—"}
+                            </td>
                             <td className="px-4 py-3">
                               <span
                                 className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeStyle}`}

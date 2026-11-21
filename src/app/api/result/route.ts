@@ -6,8 +6,9 @@ import {
   scholarships,
   scholarshipGrants,
   scholarshipCategories,
+  results,
 } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 function convertBengaliDigitsToEnglish(input: string): string {
   const banglaDigits: Record<string, string> = {
@@ -49,11 +50,21 @@ export async function GET(request: Request) {
           institutionName: institutions.name,
           institutionEiin: institutions.eiin,
           grantStatus: scholarshipGrants.status,
-          categoryName: scholarshipCategories.name,
+          grantCategoryName: scholarshipCategories.name,
+          resultMarks: results.marks,
+          resultStatus: results.status,
+          resultCategoryId: results.categoryId,
         })
         .from(students)
         .innerJoin(institutions, eq(students.institutionId, institutions.id))
         .leftJoin(scholarships, eq(students.scholarshipId, scholarships.id))
+        .leftJoin(
+          results,
+          and(
+            eq(results.studentId, students.id),
+            eq(results.scholarshipId, students.scholarshipId!),
+          ),
+        )
         .leftJoin(
           scholarshipGrants,
           and(
@@ -63,7 +74,10 @@ export async function GET(request: Request) {
         )
         .leftJoin(
           scholarshipCategories,
-          eq(scholarshipGrants.categoryId, scholarshipCategories.id),
+          eq(
+            sql`COALESCE(${results.categoryId}, ${scholarshipGrants.categoryId})`,
+            scholarshipCategories.id,
+          ),
         )
         .where(eq(students.studentId, cleanId))
         .limit(1);
@@ -75,11 +89,16 @@ export async function GET(request: Request) {
         );
       }
 
-      const resultStatus = row.grantStatus
-        ? "awarded"
-        : row.scholarshipId
-          ? "not-awarded"
-          : "not-registered";
+      let resultStatus: "awarded" | "not-awarded" | "not-registered";
+      if (row.resultStatus) {
+        resultStatus = row.resultStatus as "awarded" | "not-awarded";
+      } else if (row.grantStatus) {
+        resultStatus = "awarded";
+      } else if (row.scholarshipId) {
+        resultStatus = "not-registered";
+      } else {
+        resultStatus = "not-registered";
+      }
 
       return NextResponse.json({
         studentId: row.studentId,
@@ -90,7 +109,8 @@ export async function GET(request: Request) {
         scholarshipName: row.scholarshipName ?? null,
         result: {
           status: resultStatus,
-          category: row.categoryName ?? null,
+          category: row.grantCategoryName ?? null,
+          marks: row.resultMarks ?? null,
         },
       });
     }
@@ -122,8 +142,17 @@ export async function GET(request: Request) {
           scholarshipId: students.scholarshipId,
           grantStatus: scholarshipGrants.status,
           categoryName: scholarshipCategories.name,
+          resultMarks: results.marks,
+          resultStatus: results.status,
         })
         .from(students)
+        .leftJoin(
+          results,
+          and(
+            eq(results.studentId, students.id),
+            eq(results.scholarshipId, students.scholarshipId!),
+          ),
+        )
         .leftJoin(
           scholarshipGrants,
           and(
@@ -133,7 +162,10 @@ export async function GET(request: Request) {
         )
         .leftJoin(
           scholarshipCategories,
-          eq(scholarshipGrants.categoryId, scholarshipCategories.id),
+          eq(
+            sql`COALESCE(${results.categoryId}, ${scholarshipGrants.categoryId})`,
+            scholarshipCategories.id,
+          ),
         )
         .where(
           and(
@@ -143,20 +175,30 @@ export async function GET(request: Request) {
         )
         .orderBy(students.roll);
 
-      const list = rows.map((row) => ({
-        studentId: row.studentId,
-        name: row.name,
-        class: row.class,
-        roll: row.roll,
-        result: {
-          status: row.grantStatus
-            ? "awarded"
-            : row.scholarshipId
-              ? "not-awarded"
-              : "not-registered",
-          category: row.categoryName ?? null,
-        },
-      }));
+      const list = rows.map((row) => {
+        let resultStatus: "awarded" | "not-awarded" | "not-registered";
+        if (row.resultStatus) {
+          resultStatus = row.resultStatus as "awarded" | "not-awarded";
+        } else if (row.grantStatus) {
+          resultStatus = "awarded";
+        } else if (row.scholarshipId) {
+          resultStatus = "not-registered";
+        } else {
+          resultStatus = "not-registered";
+        }
+
+        return {
+          studentId: row.studentId,
+          name: row.name,
+          class: row.class,
+          roll: row.roll,
+          result: {
+            status: resultStatus,
+            category: row.categoryName ?? null,
+            marks: row.resultMarks ?? null,
+          },
+        };
+      });
 
       return NextResponse.json(list);
     }

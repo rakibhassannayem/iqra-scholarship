@@ -8,6 +8,7 @@ import {
   ChartColumnStacked,
   School,
   ClipboardPenLine,
+  ClipboardCheck,
   Menu,
   X,
   Award,
@@ -55,6 +56,11 @@ const navigation = [
     title: "Payment Management",
     href: "/admin/payments",
     icon: CreditCard,
+  },
+  {
+    title: "Result Management",
+    href: "/admin/results",
+    icon: ClipboardCheck,
   },
   {
     title: "Grants",

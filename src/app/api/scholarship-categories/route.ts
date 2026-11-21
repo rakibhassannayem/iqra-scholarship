@@ -21,6 +21,8 @@ export async function GET() {
         id: scholarshipCategories.id,
         name: scholarshipCategories.name,
         description: scholarshipCategories.description,
+        minMarks: scholarshipCategories.minMarks,
+        maxMarks: scholarshipCategories.maxMarks,
         isActive: scholarshipCategories.isActive,
         createdAt: scholarshipCategories.createdAt,
         updatedAt: scholarshipCategories.updatedAt,
@@ -85,11 +87,43 @@ export async function POST(request: Request) {
       );
     }
 
+    const minMarks =
+      body.minMarks !== undefined && body.minMarks !== null && body.minMarks !== ""
+        ? Math.round(Number(body.minMarks))
+        : null;
+    const maxMarks =
+      body.maxMarks !== undefined && body.maxMarks !== null && body.maxMarks !== ""
+        ? Math.round(Number(body.maxMarks))
+        : null;
+
+    if (minMarks !== null && (Number.isNaN(minMarks) || minMarks < 0)) {
+      return NextResponse.json(
+        { message: "Minimum marks must be a valid positive number." },
+        { status: 400 },
+      );
+    }
+
+    if (maxMarks !== null && (Number.isNaN(maxMarks) || maxMarks < 0)) {
+      return NextResponse.json(
+        { message: "Maximum marks must be a valid positive number." },
+        { status: 400 },
+      );
+    }
+
+    if (minMarks !== null && maxMarks !== null && minMarks > maxMarks) {
+      return NextResponse.json(
+        { message: "Minimum marks cannot be greater than maximum marks." },
+        { status: 400 },
+      );
+    }
+
     const [category] = await db
       .insert(scholarshipCategories)
       .values({
         name,
         description: description || null,
+        minMarks,
+        maxMarks,
       })
       .returning();
 
@@ -154,11 +188,63 @@ export async function PATCH(request: Request) {
     const updates: {
       name?: string;
       description?: string | null;
+      minMarks?: number | null;
+      maxMarks?: number | null;
       isActive?: boolean;
       updatedAt: Date;
     } = {
       updatedAt: new Date(),
     };
+
+    if (body.minMarks !== undefined) {
+      if (body.minMarks === null || body.minMarks === "") {
+        updates.minMarks = null;
+      } else {
+        const num = Math.round(Number(body.minMarks));
+        if (Number.isNaN(num) || num < 0) {
+          return NextResponse.json(
+            { message: "Minimum marks must be a valid positive number." },
+            { status: 400 },
+          );
+        }
+        updates.minMarks = num;
+      }
+    }
+
+    if (body.maxMarks !== undefined) {
+      if (body.maxMarks === null || body.maxMarks === "") {
+        updates.maxMarks = null;
+      } else {
+        const num = Math.round(Number(body.maxMarks));
+        if (Number.isNaN(num) || num < 0) {
+          return NextResponse.json(
+            { message: "Maximum marks must be a valid positive number." },
+            { status: 400 },
+          );
+        }
+        updates.maxMarks = num;
+      }
+    }
+
+    const effectiveMin =
+      updates.minMarks !== undefined
+        ? updates.minMarks
+        : existingCategory.minMarks;
+    const effectiveMax =
+      updates.maxMarks !== undefined
+        ? updates.maxMarks
+        : existingCategory.maxMarks;
+
+    if (
+      effectiveMin !== null &&
+      effectiveMax !== null &&
+      effectiveMin > effectiveMax
+    ) {
+      return NextResponse.json(
+        { message: "Minimum marks cannot be greater than maximum marks." },
+        { status: 400 },
+      );
+    }
 
     if (body.name !== undefined) {
       if (typeof body.name !== "string" || !body.name.trim()) {
@@ -259,6 +345,8 @@ export async function PATCH(request: Request) {
     );
   }
 }
+
+export { PATCH as PUT };
 
 export async function DELETE(request: Request) {
   try {

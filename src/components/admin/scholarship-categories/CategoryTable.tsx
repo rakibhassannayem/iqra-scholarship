@@ -55,6 +55,7 @@ export default function CategoryTable({
         <TableHeader>
           <TableRow>
             <TableHead>Category</TableHead>
+            <TableHead>Marks Limit (নম্বর সীমা)</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -64,10 +65,34 @@ export default function CategoryTable({
         <TableBody>
           {categories.map((category) => {
             const updating = updatingId === category.id;
+            const hasRange =
+              category.minMarks !== null && category.maxMarks !== null;
+            const hasMinOnly =
+              category.minMarks !== null && category.maxMarks === null;
+            const hasMaxOnly =
+              category.minMarks === null && category.maxMarks !== null;
 
             return (
               <TableRow key={category.id}>
                 <TableCell className="font-medium">{category.name}</TableCell>
+
+                <TableCell>
+                  {hasRange ? (
+                    <Badge variant="outline" className="font-mono text-xs">
+                      {category.minMarks} - {category.maxMarks} নম্বর
+                    </Badge>
+                  ) : hasMinOnly ? (
+                    <Badge variant="outline" className="font-mono text-xs">
+                      ≥ {category.minMarks} নম্বর
+                    </Badge>
+                  ) : hasMaxOnly ? (
+                    <Badge variant="outline" className="font-mono text-xs">
+                      ≤ {category.maxMarks} নম্বর
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
 
                 <TableCell className="max-w-md text-sm text-muted-foreground">
                   {category.description || "—"}

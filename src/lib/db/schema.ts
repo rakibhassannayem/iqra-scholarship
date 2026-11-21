@@ -73,6 +73,8 @@ export const scholarshipCategories = pgTable(
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 100 }).notNull().unique(),
     description: varchar("description", { length: 1000 }),
+    minMarks: integer("min_marks"),
+    maxMarks: integer("max_marks"),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -80,6 +82,35 @@ export const scholarshipCategories = pgTable(
   (table) => [
     uniqueIndex("scholarship_categories_name_lower_unique").on(
       sql`lower(${table.name})`,
+    ),
+  ],
+);
+
+export const results = pgTable(
+  "results",
+  {
+    id: serial("id").primaryKey(),
+    studentId: integer("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    scholarshipId: integer("scholarship_id")
+      .notNull()
+      .references(() => scholarships.id, { onDelete: "cascade" }),
+    marks: integer("marks").notNull(),
+    categoryId: integer("category_id").references(
+      () => scholarshipCategories.id,
+      { onDelete: "set null" },
+    ),
+    status: varchar("status", { length: 30 })
+      .notNull()
+      .default("not-awarded"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("student_scholarship_result_unique").on(
+      table.studentId,
+      table.scholarshipId,
     ),
   ],
 );

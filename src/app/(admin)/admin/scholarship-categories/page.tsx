@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 import CategoryForm from "@/components/admin/scholarship-categories/CategoryForm";
 import CategoryTable from "@/components/admin/scholarship-categories/CategoryTable";
 import type { Category } from "@/types/scholarship-category";
@@ -14,10 +15,11 @@ export default function ScholarshipCategoriesPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [minMarks, setMinMarks] = useState("");
+  const [maxMarks, setMaxMarks] = useState("");
   const [saving, setSaving] = useState(false);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
@@ -49,8 +51,9 @@ export default function ScholarshipCategoriesPage() {
     setEditingCategory(null);
     setName("");
     setDescription("");
+    setMinMarks("");
+    setMaxMarks("");
     setError("");
-    setSuccess("");
     setDialogOpen(true);
   }
 
@@ -58,8 +61,9 @@ export default function ScholarshipCategoriesPage() {
     setEditingCategory(category);
     setName(category.name);
     setDescription(category.description || "");
+    setMinMarks(category.minMarks !== null ? String(category.minMarks) : "");
+    setMaxMarks(category.maxMarks !== null ? String(category.maxMarks) : "");
     setError("");
-    setSuccess("");
     setDialogOpen(true);
   }
 
@@ -67,21 +71,31 @@ export default function ScholarshipCategoriesPage() {
     event.preventDefault();
     setSaving(true);
     setError("");
-    setSuccess("");
 
     try {
       const isEditing = editingCategory !== null;
       const url = "/api/scholarship-categories";
       const method = isEditing ? "PUT" : "POST";
+      const parsedMin = minMarks.trim() !== "" ? Number(minMarks.trim()) : null;
+      const parsedMax = maxMarks.trim() !== "" ? Number(maxMarks.trim()) : null;
+
+      if (parsedMin !== null && parsedMax !== null && parsedMin > parsedMax) {
+        throw new Error("Minimum marks cannot be greater than maximum marks.");
+      }
+
       const payload = isEditing
         ? {
             id: editingCategory.id,
             name: name.trim(),
             description: description.trim(),
+            minMarks: parsedMin,
+            maxMarks: parsedMax,
           }
         : {
             name: name.trim(),
             description: description.trim(),
+            minMarks: parsedMin,
+            maxMarks: parsedMax,
           };
 
       const response = await fetch(url, {
@@ -99,11 +113,13 @@ export default function ScholarshipCategoriesPage() {
       }
 
       setDialogOpen(false);
-      setSuccess(
-        isEditing
-          ? "Category updated successfully."
-          : "Category created successfully.",
-      );
+      toast.add({
+        title: isEditing ? "Category updated" : "Category created",
+        description: isEditing
+          ? `Category "${name}" updated successfully.`
+          : `Category "${name}" created successfully.`,
+        type: "success",
+      });
       await fetchCategories();
     } catch (err) {
       setError(
@@ -117,7 +133,6 @@ export default function ScholarshipCategoriesPage() {
   async function handleToggleActive(category: Category) {
     setUpdatingId(category.id);
     setError("");
-    setSuccess("");
 
     try {
       const nextActive = !category.isActive;
@@ -138,17 +153,21 @@ export default function ScholarshipCategoriesPage() {
         throw new Error(data.message || "Failed to update category.");
       }
 
-      setSuccess(
-        nextActive
-          ? "Category activated successfully."
-          : "Category deactivated successfully.",
-      );
+      toast.add({
+        title: "Status updated",
+        description: nextActive
+          ? `Category "${category.name}" activated.`
+          : `Category "${category.name}" deactivated.`,
+        type: "success",
+      });
 
       await fetchCategories();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to update category.",
-      );
+      toast.add({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to update category.",
+        type: "error",
+      });
     } finally {
       setUpdatingId(null);
     }
@@ -162,7 +181,7 @@ export default function ScholarshipCategoriesPage() {
             Scholarship Categories
           </h2>
           <p className="text-sm text-muted-foreground">
-            Create and manage scholarship grant categories.
+            Create and manage scholarship categories and their marks limits.
           </p>
         </div>
 
@@ -172,15 +191,9 @@ export default function ScholarshipCategoriesPage() {
         </Button>
       </div>
 
-      {error && (
+      {error && !dialogOpen && (
         <p role="alert" className="text-sm text-destructive">
           {error}
-        </p>
-      )}
-
-      {success && (
-        <p role="status" className="text-sm text-green-700 dark:text-green-400">
-          {success}
         </p>
       )}
 
@@ -198,8 +211,12 @@ export default function ScholarshipCategoriesPage() {
         category={editingCategory}
         name={name}
         description={description}
+        minMarks={minMarks}
+        maxMarks={maxMarks}
         setName={setName}
         setDescription={setDescription}
+        setMinMarks={setMinMarks}
+        setMaxMarks={setMaxMarks}
         saving={saving}
         error={error}
         onSubmit={handleSubmit}

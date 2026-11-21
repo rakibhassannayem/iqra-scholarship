@@ -113,6 +113,20 @@
       "when": 1793616558353,
       "tag": "0015_late_stepford_cuckoos",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1795233825130,
+      "tag": "0016_thin_talisman",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1795234457055,
+      "tag": "0017_strange_quentin_quire",
+      "breakpoints": true
     }
   ]
 }
