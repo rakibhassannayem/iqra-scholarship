@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Plus, UserPlus, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react";
+import { UserPlus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 import StudentTable from "@/components/admin/students/StudentTable";
 import StudentForm from "@/components/admin/students/StudentForm";
 import StudentDetailsModal from "@/components/admin/students/StudentDetailsModal";
@@ -18,13 +19,10 @@ export default function StudentRegistrationsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
-
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [formError, setFormError] = useState("");
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    setError("");
 
     try {
       const [studentsResponse, institutionsResponse] = await Promise.all([
@@ -44,9 +42,12 @@ export default function StudentRegistrationsPage() {
       setStudents(studentsData);
       setInstitutions(institutionsData);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load student data.",
-      );
+      toast.add({
+        title: "Error",
+        description:
+          err instanceof Error ? err.message : "Failed to load student data.",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -58,22 +59,19 @@ export default function StudentRegistrationsPage() {
 
   function openCreateForm() {
     setEditingStudent(null);
-    setError("");
-    setSuccess("");
+    setFormError("");
     setFormOpen(true);
   }
 
   function openEditForm(student: Student) {
     setEditingStudent(student);
-    setError("");
-    setSuccess("");
+    setFormError("");
     setFormOpen(true);
   }
 
   async function handleSubmit(values: StudentFormValues) {
     setSaving(true);
-    setError("");
-    setSuccess("");
+    setFormError("");
 
     try {
       const isEditing = editingStudent !== null;
@@ -96,15 +94,17 @@ export default function StudentRegistrationsPage() {
 
       setFormOpen(false);
       setEditingStudent(null);
-      setSuccess(
-        isEditing
-          ? "Student registration updated successfully."
-          : `Student registered successfully with ID: ${data.studentId || data.student?.studentId || "Generated"}`,
-      );
+      toast.add({
+        title: isEditing ? "Registration Updated" : "Registration Successful",
+        description: isEditing
+          ? `Student "${values.name}" registration updated successfully.`
+          : `Student "${values.name}" registered successfully with ID: ${data.studentId || data.student?.studentId || "Generated"}`,
+        type: "success",
+      });
 
       await fetchData();
     } catch (err) {
-      setError(
+      setFormError(
         err instanceof Error ? err.message : "Failed to save student registration.",
       );
     } finally {
@@ -142,21 +142,6 @@ export default function StudentRegistrationsPage() {
         </div>
       </div>
 
-      {/* Notifications */}
-      {error && !formOpen && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-          <AlertCircle className="size-4 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {success && (
-        <div className="flex items-center gap-2 rounded-lg border border-green-600/30 bg-green-600/10 p-4 text-sm text-green-700 dark:text-green-400">
-          <CheckCircle2 className="size-4 shrink-0" />
-          <span>{success}</span>
-        </div>
-      )}
-
       {/* Table or Loading */}
       {loading && students.length === 0 ? (
         <div className="rounded-xl border bg-card p-12 text-center text-muted-foreground">
@@ -191,7 +176,7 @@ export default function StudentRegistrationsPage() {
         onOpenChange={(open) => {
           setFormOpen(open);
           if (!open) {
-            setError("");
+            setFormError("");
             setEditingStudent(null);
           }
         }}
@@ -208,7 +193,7 @@ export default function StudentRegistrationsPage() {
         }
         editing={Boolean(editingStudent)}
         saving={saving}
-        error={error}
+        error={formError}
         onSubmit={handleSubmit}
       />
     </div>

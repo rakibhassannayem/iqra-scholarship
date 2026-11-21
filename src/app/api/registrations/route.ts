@@ -68,3 +68,5 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export { POST } from "../students/route";

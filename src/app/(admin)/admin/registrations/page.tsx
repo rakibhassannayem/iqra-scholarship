@@ -3,18 +3,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 import RegistrationTable from "@/components/admin/registrations/RegistrationTable";
 import RegistrationDetailsModal from "@/components/admin/registrations/RegistrationDetailsModal";
-import DirectRegisterModal from "@/components/admin/registrations/DirectRegisterModal";
+import DirectRegisterModal, {
+  type DirectRegisterFormData,
+} from "@/components/admin/registrations/DirectRegisterModal";
 import type { Registration } from "@/types/registration";
 
 export default function RegistrationsPage() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   const [viewingRegistration, setViewingRegistration] =
     useState<Registration | null>(null);
@@ -30,15 +30,17 @@ export default function RegistrationsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to load registrations.");
+        throw new Error(data.message || data.error || "Failed to load registrations.");
       }
 
       setRegistrations(data);
-      setError("");
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load registrations.",
-      );
+      toast.add({
+        title: "Error",
+        description:
+          err instanceof Error ? err.message : "Failed to load registrations.",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -50,25 +52,15 @@ export default function RegistrationsPage() {
 
   function openCreateForm() {
     setFormError("");
-    setError("");
-    setSuccess("");
     setFormOpen(true);
   }
 
-  async function handleDirectRegister(formData: {
-    institutionId: number;
-    scholarshipId: number;
-    name: string;
-    class: number;
-    roll: number;
-  }) {
+  async function handleDirectRegister(formData: DirectRegisterFormData) {
     setSaving(true);
     setFormError("");
-    setError("");
-    setSuccess("");
 
     try {
-      const response = await fetch("/api/registrations", {
+      const response = await fetch("/api/students", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -81,7 +73,11 @@ export default function RegistrationsPage() {
       }
 
       setFormOpen(false);
-      setSuccess("Student registered successfully.");
+      toast.add({
+        title: "Registration Successful",
+        description: `Student ${formData.name} registered successfully (ID: ${data.studentId || data.student?.studentId || "Generated"}).`,
+        type: "success",
+      });
       await fetchRegistrations();
     } catch (err) {
       setFormError(
@@ -109,18 +105,6 @@ export default function RegistrationsPage() {
           Add Registration
         </Button>
       </div>
-
-      {error && (
-        <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-600 dark:text-emerald-400">
-          {success}
-        </div>
-      )}
 
       <RegistrationTable
         registrations={registrations}

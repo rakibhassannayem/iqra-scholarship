@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,8 +12,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { GraduationCap, School } from "lucide-react";
 import type { DirectRegisterFormData } from "@/types/registration";
+import type { Institution } from "@/types/institution";
+import type { Scholarship } from "@/types/scholarship";
 
 export type { DirectRegisterFormData };
 
@@ -24,6 +27,22 @@ type DirectRegisterModalProps = {
   onSubmit: (data: DirectRegisterFormData) => Promise<void>;
 };
 
+function convertBengaliDigitsToEnglish(input: string): string {
+  const banglaDigits: Record<string, string> = {
+    "০": "0",
+    "১": "1",
+    "২": "2",
+    "৩": "3",
+    "৪": "4",
+    "৫": "5",
+    "৬": "6",
+    "৭": "7",
+    "৮": "8",
+    "৯": "9",
+  };
+  return input.replace(/[০-৯]/g, (digit) => banglaDigits[digit] || digit);
+}
+
 export default function DirectRegisterModal({
   open,
   onOpenChange,
@@ -31,109 +50,331 @@ export default function DirectRegisterModal({
   error,
   onSubmit,
 }: DirectRegisterModalProps) {
-  const [institutionId, setInstitutionId] = useState("");
-  const [scholarshipId, setScholarshipId] = useState("");
-  const [name, setName] = useState("");
-  const [studentClass, setStudentClass] = useState("");
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [scholarships, setScholarships] = useState<Scholarship[]>([]);
+  const [loadingData, setLoadingData] = useState(false);
+
+  // Form states
+  const [institutionName, setInstitutionName] = useState("");
+  const [selectedInstitution, setSelectedInstitution] =
+    useState<Institution | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const [studentName, setStudentName] = useState("");
+  const [classId, setClassId] = useState("");
   const [roll, setRoll] = useState("");
+  const [selectedScholarshipId, setSelectedScholarshipId] = useState<string>("");
+  const [validationError, setValidationError] = useState("");
+
+  // Load institutions and scholarships on open
+  useEffect(() => {
+    if (!open) return;
+
+    let mounted = true;
+    setLoadingData(true);
+    setValidationError("");
+
+    Promise.all([fetch("/api/institutions"), fetch("/api/scholarships")])
+      .then(async ([instRes, schRes]) => {
+        if (!mounted) return;
+        if (instRes.ok) {
+          const instData = await instRes.json();
+          setInstitutions(instData);
+        }
+        if (schRes.ok) {
+          const schData: Scholarship[] = await schRes.json();
+          setScholarships(schData);
+
+          // Auto-select active scholarship if none selected
+          const active = schData.find((s) => s.isActive);
+          if (active) {
+            setSelectedScholarshipId(String(active.id));
+            if (!classId) {
+              setClassId(String(active.eligibilityClass));
+            }
+          }
+        }
+      })
+      .catch((err) => console.error("Failed to load modal data:", err))
+      .finally(() => {
+        if (mounted) setLoadingData(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [open]);
+
+  const filteredInstitutions = institutions.filter((inst) => {
+    const q = institutionName.trim().toLowerCase();
+    return (
+      inst.name.toLowerCase().includes(q) ||
+      inst.eiin.toLowerCase().includes(q)
+    );
+  });
+
+  function handleInstitutionInput(value: string) {
+    setInstitutionName(value);
+    setSelectedInstitution(null);
+    setValidationError("");
+    setShowSuggestions(true);
+  }
+
+  function handleSelectInstitution(inst: Institution) {
+    setSelectedInstitution(inst);
+    setInstitutionName(inst.name);
+    setShowSuggestions(false);
+    setValidationError("");
+  }
 
   function handleClose() {
-    setInstitutionId("");
-    setScholarshipId("");
-    setName("");
-    setStudentClass("");
+    setInstitutionName("");
+    setSelectedInstitution(null);
+    setShowSuggestions(false);
+    setStudentName("");
+    setClassId("");
     setRoll("");
+    setSelectedScholarshipId("");
+    setValidationError("");
     onOpenChange(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setValidationError("");
+
+    if (!selectedInstitution) {
+      setValidationError("Please select an institution from the list.");
+      return;
+    }
+
+    const numericRoll = Number(convertBengaliDigitsToEnglish(roll.trim()));
+    if (!numericRoll || Number.isNaN(numericRoll) || numericRoll < 1) {
+      setValidationError("Please enter a valid roll number.");
+      return;
+    }
+
+    const numericClass = Number(convertBengaliDigitsToEnglish(classId.trim()));
+    if (!numericClass || Number.isNaN(numericClass) || numericClass < 1 || numericClass > 12) {
+      setValidationError("Please select a valid class.");
+      return;
+    }
+
+    // Check eligibility if a scholarship is selected
+    const chosenScholarship = scholarships.find(
+      (s) => String(s.id) === selectedScholarshipId,
+    );
+    if (chosenScholarship && numericClass !== chosenScholarship.eligibilityClass) {
+      setValidationError(
+        `Selected scholarship "${chosenScholarship.name}" is only available for Class ${chosenScholarship.eligibilityClass}.`,
+      );
+      return;
+    }
+
     await onSubmit({
-      institutionId: Number(institutionId),
-      scholarshipId: Number(scholarshipId),
-      name,
-      class: Number(studentClass),
-      roll: Number(roll),
+      institutionId: selectedInstitution.id,
+      scholarshipId: selectedScholarshipId ? Number(selectedScholarshipId) : undefined,
+      name: studentName.trim(),
+      class: numericClass,
+      roll: numericRoll,
     });
   }
 
+  const currentScholarship = scholarships.find(
+    (s) => String(s.id) === selectedScholarshipId,
+  );
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Registration</DialogTitle>
-          <DialogDescription>
-            Directly register a student for a scholarship.
-          </DialogDescription>
+          <div className="flex items-center gap-2">
+            <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <GraduationCap className="size-5" />
+            </div>
+            <div>
+              <DialogTitle>Student Registration</DialogTitle>
+              <DialogDescription>
+                Register a new student directly into the scholarship system.
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="dr-institution">Institution ID</Label>
-            <Input
-              id="dr-institution"
-              type="number"
-              value={institutionId}
-              onChange={(e) => setInstitutionId(e.target.value)}
-              placeholder="Institution ID"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="dr-scholarship">Scholarship ID</Label>
-            <Input
-              id="dr-scholarship"
-              type="number"
-              value={scholarshipId}
-              onChange={(e) => setScholarshipId(e.target.value)}
-              placeholder="Scholarship ID"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="dr-name">Student Name</Label>
-            <Input
-              id="dr-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Full name"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="dr-class">Class</Label>
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          {/* Institution with Search Suggestions */}
+          <div className="space-y-1.5">
+            <Label htmlFor="admin-reg-institution">
+              Educational Institution <span className="text-destructive">*</span>
+            </Label>
+            <div className="relative">
               <Input
-                id="dr-class"
-                type="number"
-                value={studentClass}
-                onChange={(e) => setStudentClass(e.target.value)}
-                placeholder="e.g. 10"
+                id="admin-reg-institution"
                 required
+                autoComplete="off"
+                value={institutionName}
+                onChange={(e) => handleInstitutionInput(e.target.value)}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => {
+                  setTimeout(() => setShowSuggestions(false), 200);
+                }}
+                placeholder={
+                  loadingData
+                    ? "Loading institutions..."
+                    : "Type to search by name or EIIN..."
+                }
+                disabled={loadingData}
               />
+
+              {showSuggestions && institutionName.trim() && (
+                <ul className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border bg-popover py-1 shadow-lg ring-1 ring-border text-popover-foreground">
+                  {filteredInstitutions.length > 0 ? (
+                    filteredInstitutions.slice(0, 20).map((inst) => (
+                      <li key={inst.id}>
+                        <button
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => handleSelectInstitution(inst)}
+                          className="w-full px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
+                        >
+                          <span className="block font-medium text-foreground">
+                            {inst.name}
+                          </span>
+                          <span className="block text-xs text-muted-foreground">
+                            EIIN: {inst.eiin}
+                          </span>
+                        </button>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="px-3 py-2.5 text-xs text-muted-foreground text-center">
+                      No matching institutions found
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          {/* Institution EIIN (Auto-filled) */}
+          <div className="space-y-1.5">
+            <Label htmlFor="admin-reg-eiin">Institution EIIN</Label>
+            <Input
+              id="admin-reg-eiin"
+              readOnly
+              value={selectedInstitution?.eiin ?? ""}
+              placeholder="Auto-filled once institution is selected"
+              className="bg-muted text-muted-foreground"
+            />
+          </div>
+
+          {/* Student Full Name */}
+          <div className="space-y-1.5">
+            <Label htmlFor="admin-reg-name">
+              Student Full Name <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="admin-reg-name"
+              required
+              maxLength={150}
+              autoComplete="name"
+              value={studentName}
+              onChange={(e) => {
+                setStudentName(e.target.value);
+                setValidationError("");
+              }}
+              placeholder="Enter student full name"
+            />
+          </div>
+
+          {/* Class and Roll */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="admin-reg-class">
+                Class <span className="text-destructive">*</span>
+              </Label>
+              <select
+                id="admin-reg-class"
+                required
+                value={classId}
+                onChange={(e) => {
+                  setClassId(e.target.value);
+                  setValidationError("");
+                }}
+                className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="">Select class</option>
+                {Array.from({ length: 10 }, (_, i) => String(i + 1)).map((cls) => (
+                  <option key={cls} value={cls}>
+                    Class {cls}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="dr-roll">Roll</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="admin-reg-roll">
+                Roll Number <span className="text-destructive">*</span>
+              </Label>
               <Input
-                id="dr-roll"
-                type="number"
+                id="admin-reg-roll"
+                required
+                type="text"
+                inputMode="numeric"
+                maxLength={10}
                 value={roll}
-                onChange={(e) => setRoll(e.target.value)}
-                placeholder="e.g. 1"
-                required
+                onChange={(e) => {
+                  setRoll(
+                    e.target.value.replace(/[^0-9০-৯]/g, "").slice(0, 10),
+                  );
+                  setValidationError("");
+                }}
+                placeholder="e.g. 12 or ১২"
               />
             </div>
           </div>
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
+          {/* Scholarship Program */}
+          <div className="space-y-1.5">
+            <Label htmlFor="admin-reg-scholarship">
+              Assign to Scholarship{" "}
+              <span className="text-xs text-muted-foreground">(Optional)</span>
+            </Label>
+            <select
+              id="admin-reg-scholarship"
+              value={selectedScholarshipId}
+              onChange={(e) => {
+                setSelectedScholarshipId(e.target.value);
+                setValidationError("");
+                const sch = scholarships.find((s) => String(s.id) === e.target.value);
+                if (sch) {
+                  setClassId(String(sch.eligibilityClass));
+                }
+              }}
+              className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="">Auto-assign active scholarship</option>
+              {scholarships.map((sch) => (
+                <option key={sch.id} value={sch.id}>
+                  {sch.name} (Class {sch.eligibilityClass}) {sch.isActive ? "— Active" : ""}
+                </option>
+              ))}
+            </select>
+            {currentScholarship && (
+              <p className="text-[11px] text-muted-foreground">
+                Eligible Class: <strong>Class {currentScholarship.eligibilityClass}</strong> | Fee: ৳{currentScholarship.registrationFee}
+              </p>
+            )}
+          </div>
+
+          {/* Error Message */}
+          {(validationError || error) && (
+            <p className="rounded-md bg-destructive/10 p-3 text-xs font-medium text-destructive">
+              {validationError || error}
+            </p>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="pt-2">
             <Button
               type="button"
               variant="outline"
@@ -142,8 +383,8 @@ export default function DirectRegisterModal({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Registering..." : "Register"}
+            <Button type="submit" disabled={saving || !studentName.trim()}>
+              {saving ? "Registering..." : "Register Student"}
             </Button>
           </DialogFooter>
         </form>
@@ -151,4 +392,3 @@ export default function DirectRegisterModal({
     </Dialog>
   );
 }
-

@@ -17,7 +17,7 @@ export type Registration = {
 
 export type DirectRegisterFormData = {
   institutionId: number;
-  scholarshipId: number;
+  scholarshipId?: number;
   name: string;
   class: number;
   roll: number;

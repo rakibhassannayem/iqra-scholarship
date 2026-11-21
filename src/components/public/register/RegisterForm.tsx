@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Award, BookOpen, Calendar } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import AdmitCard, { type AdmitCardData } from "./AdmitCard";
 import type { Institution } from "@/types/institution";
@@ -28,6 +28,8 @@ export default function RegisterForm() {
   const isBangla = language === "bn";
 
   const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [activeScholarship, setActiveScholarship] =
+    useState<Scholarship | null>(null);
   const [hasActiveScholarship, setHasActiveScholarship] = useState(false);
   const [checkingScholarship, setCheckingScholarship] = useState(true);
   const [scholarshipCheckFailed, setScholarshipCheckFailed] = useState(false);
@@ -81,12 +83,19 @@ export default function RegisterForm() {
 
         const data: Scholarship[] = await response.json();
 
-        setHasActiveScholarship(
-          data.some((scholarship) => scholarship.isActive),
-        );
+        const active = data.find((scholarship) => scholarship.isActive);
+        if (active) {
+          setActiveScholarship(active);
+          setHasActiveScholarship(true);
+          setClassId(String(active.eligibilityClass));
+        } else {
+          setActiveScholarship(null);
+          setHasActiveScholarship(false);
+        }
       } catch (error) {
         console.error("Failed to check active scholarship:", error);
         setScholarshipCheckFailed(true);
+        setActiveScholarship(null);
         setHasActiveScholarship(false);
       } finally {
         setCheckingScholarship(false);
@@ -130,6 +139,15 @@ export default function RegisterForm() {
         isBangla
           ? "তালিকা থেকে একটি প্রতিষ্ঠান নির্বাচন করুন।"
           : "Please select an institution from the suggestions.",
+      );
+      return;
+    }
+
+    if (activeScholarship && Number(classId) !== activeScholarship.eligibilityClass) {
+      setErrorMessage(
+        isBangla
+          ? `"${activeScholarship.name}" বৃত্তিটি শুধুমাত্র শ্রেণি ${activeScholarship.eligibilityClass}-এর শিক্ষার্থীদের জন্য উন্মুক্ত।`
+          : `"${activeScholarship.name}" is only available for Class ${activeScholarship.eligibilityClass} students.`,
       );
       return;
     }
@@ -260,10 +278,10 @@ export default function RegisterForm() {
   }
 
   return (
-    <section className="x-4 py-16 sm:py-20">
+    <section className="px-4 py-16 sm:py-20">
       <div className="mx-auto max-w-3xl">
         <div className="rounded-2xl border bg-card p-5 shadow-sm sm:p-8">
-          <div className="mb-7 flex items-start gap-4">
+          <div className="mb-6 flex items-start gap-4">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <GraduationCap className="size-6" />
             </div>
@@ -282,6 +300,63 @@ export default function RegisterForm() {
               </p>
             </div>
           </div>
+
+          {/* Active Scholarship Display */}
+          {activeScholarship && (
+            <div className="mb-7 rounded-xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 sm:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                    <Award className="size-3.5" />
+                    <span>
+                      {isBangla ? "চলমান বৃত্তি কার্যক্রম" : "Active Scholarship Program"}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-foreground sm:text-lg">
+                    {activeScholarship.name}
+                  </h3>
+                  {activeScholarship.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {activeScholarship.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-3.5 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+                <div className="inline-flex items-center gap-1.5 rounded-lg border bg-background/80 px-2.5 py-1 text-xs backdrop-blur">
+                  <BookOpen className="size-3.5 text-primary" />
+                  <span className="text-muted-foreground">
+                    {isBangla ? "নির্ধারিত শ্রেণি: " : "Class: "}
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {isBangla
+                      ? `শ্রেণি ${activeScholarship.eligibilityClass}`
+                      : `Class ${activeScholarship.eligibilityClass}`}
+                  </span>
+                </div>
+
+                <div className="inline-flex items-center gap-1.5 rounded-lg border bg-background/80 px-2.5 py-1 text-xs backdrop-blur">
+                  <Calendar className="size-3.5 text-primary" />
+                  <span className="text-muted-foreground">
+                    {isBangla ? "শিক্ষাবর্ষ: " : "Session: "}
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {activeScholarship.academicYear}
+                  </span>
+                </div>
+
+                <div className="inline-flex items-center gap-1.5 rounded-lg border bg-background/80 px-2.5 py-1 text-xs backdrop-blur">
+                  <span className="text-muted-foreground">
+                    {isBangla ? "নিবন্ধন ফি: " : "Fee: "}
+                  </span>
+                  <span className="font-bold text-primary">
+                    ৳{activeScholarship.registrationFee}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
@@ -408,11 +483,21 @@ export default function RegisterForm() {
 
                   {Array.from({ length: 10 }, (_, index) =>
                     String(index + 1),
-                  ).map((value) => (
-                    <option key={value} value={value}>
-                      {isBangla ? `শ্রেণি ${value}` : `Class ${value}`}
-                    </option>
-                  ))}
+                  ).map((value) => {
+                    const isEligible =
+                      activeScholarship &&
+                      String(activeScholarship.eligibilityClass) === value;
+                    return (
+                      <option key={value} value={value}>
+                        {isBangla ? `শ্রেণি ${value}` : `Class ${value}`}
+                        {isEligible
+                          ? isBangla
+                            ? " (নির্ধারিত শ্রেণি)"
+                            : " (Eligible Class)"
+                          : ""}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
