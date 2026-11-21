@@ -7,7 +7,6 @@ export * from "./registration";
 export * from "./admit-card";
 export * from "./payment";
 export * from "./prize";
-export * from "./grant";
 export * from "./notice";
 export * from "./user";
 export * from "./about-page";

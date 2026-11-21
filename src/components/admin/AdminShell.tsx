@@ -11,7 +11,6 @@ import {
   ClipboardCheck,
   Menu,
   X,
-  Award,
   Trophy,
   Megaphone,
   UserShield,
@@ -61,11 +60,6 @@ const navigation = [
     title: "Result Management",
     href: "/admin/results",
     icon: ClipboardCheck,
-  },
-  {
-    title: "Grants",
-    href: "/admin/grants",
-    icon: Award,
   },
   {
     title: "Prize Confirmation",
