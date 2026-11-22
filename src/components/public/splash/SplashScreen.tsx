@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, BookOpen } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { toast } from "@/components/ui/toast";
 import {
@@ -164,7 +164,7 @@ export default function SplashScreen() {
       <IslamicBackgroundPattern />
 
       {/* Main Islamic Card with Rich Parchment Warmth and Golden Borders */}
-      <div className="relative z-10 w-full max-w-2xl rounded-3xl border-2 border-amber-700/35 bg-[#FAF5EC]/95 p-6 sm:p-10 md:p-12 shadow-[0_25px_60px_-15px_rgba(40,25,10,0.38)] backdrop-blur-md animate-splash-zoom-in ring-2 ring-amber-600/20">
+      <div className="relative z-10 w-full max-w-2xl rounded-3xl border-2 border-amber-700/35 bg-[#FAF5EC]/95 p-5 sm:p-8 md:p-9 my-auto shadow-[0_25px_60px_-15px_rgba(40,25,10,0.38)] backdrop-blur-md animate-splash-zoom-in ring-2 ring-amber-600/20">
         {/* Decorative corner ornaments */}
         <div className="absolute top-3 left-3">
           <IslamicCornerOrnament position="top-left" />
@@ -182,12 +182,12 @@ export default function SplashScreen() {
         {/* Content Wrapper */}
         <div className="flex flex-col items-center text-center">
           {/* Top emblem with glowing golden halo */}
-          <div className="mb-4 inline-flex items-center justify-center rounded-2xl bg-amber-600/15 p-3 text-amber-800 shadow-inner ring-1 ring-amber-700/30 animate-splash-gleam">
-            <IslamicStar className="size-7 text-amber-700 animate-splash-pulse" />
+          <div className="mb-3 inline-flex items-center justify-center rounded-2xl bg-amber-600/15 p-2.5 text-amber-800 shadow-inner ring-1 ring-amber-700/30 animate-splash-gleam">
+            <IslamicStar className="size-6 text-amber-700 animate-splash-pulse" />
           </div>
 
           {/* Subtitle / Iqra Banner */}
-          <div className="mb-3 animate-splash-fade-up [animation-delay:100ms]">
+          <div className="mb-2.5 animate-splash-fade-up [animation-delay:100ms]">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-700/25 bg-amber-600/10 px-3.5 py-1 text-xs font-semibold tracking-wide text-amber-950">
               <Sparkles className="size-3 text-amber-700" />
               <span>ইক্বরা নূরানী তা&apos;লীমুল কুরআন ফাউন্ডেশন</span>
@@ -196,12 +196,12 @@ export default function SplashScreen() {
 
           {/* 1. Main Arabic Bismillah Calligraphy with Moving Shimmer Effect */}
           <div
-            className="my-4 sm:my-6 w-full animate-splash-fade-up [animation-delay:200ms]"
+            className="my-2 sm:my-3 w-full animate-splash-fade-up [animation-delay:200ms]"
             dir="rtl"
             lang="ar"
           >
             <h1
-              className="text-3xl sm:text-5xl md:text-6xl font-bold leading-normal font-arabic tracking-wide select-none drop-shadow-[0_2px_12px_rgba(180,120,30,0.3)] bg-gradient-to-r from-emerald-950 via-amber-700 to-emerald-950 bg-clip-text text-transparent animate-splash-shimmer"
+              className="text-2xl sm:text-4xl md:text-5xl font-bold leading-normal font-arabic tracking-wide select-none drop-shadow-[0_2px_12px_rgba(180,120,30,0.3)] bg-gradient-to-r from-emerald-950 via-amber-700 to-emerald-950 bg-clip-text text-transparent animate-splash-shimmer"
               style={{
                 fontFamily:
                   "var(--font-amiri), 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif",
@@ -211,22 +211,58 @@ export default function SplashScreen() {
             </h1>
           </div>
 
-          {/* 2. Bengali Pronunciation */}
-          <p className="text-base sm:text-xl font-semibold tracking-wide text-amber-950 animate-splash-fade-up [animation-delay:350ms]">
+          {/* Bengali Pronunciation & Meaning for Bismillah */}
+          <p className="text-sm sm:text-lg font-semibold tracking-wide text-amber-950 animate-splash-fade-up [animation-delay:280ms]">
             বিসমিল্লাহির রাহমানির রাহিম
           </p>
 
-          {/* 3. Bengali Meaning */}
-          <p className="mt-2 text-sm sm:text-base text-stone-700 font-serif italic max-w-md animate-splash-fade-up [animation-delay:450ms]">
+          <p className="mt-0.5 text-xs sm:text-sm text-stone-700 font-serif italic max-w-md animate-splash-fade-up [animation-delay:340ms]">
             পরম করুণাময়, অসীম দয়ালু আল্লাহর নামে।
           </p>
 
-          {/* Elegant Divider */}
-          <IslamicDivider className="w-52 sm:w-72 my-5 animate-splash-fade-up [animation-delay:550ms]" />
+          {/* Decorative Divider */}
+          <IslamicDivider className="w-40 sm:w-56 my-3 opacity-75 animate-splash-fade-up [animation-delay:400ms]" />
 
-          {/* 4. Iqra Scholarship Branding */}
-          <div className="mb-6 space-y-1 animate-splash-fade-up [animation-delay:650ms]">
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
+          {/* 2. Surah Al-Alaq 1st Ayat (সূরা আল-আলাক্ব: ১ম আয়াত) */}
+          <div className="w-full max-w-lg rounded-2xl border border-amber-700/30 bg-gradient-to-b from-amber-500/[0.08] to-amber-600/[0.03] px-4 py-3 sm:px-6 sm:py-3.5 shadow-xs backdrop-blur-xs animate-splash-fade-up [animation-delay:460ms]">
+            <div className="mb-1 flex items-center justify-center gap-1.5 text-emerald-900/90">
+              <BookOpen className="size-3.5 text-amber-700" />
+              <span className="text-[11px] sm:text-xs font-semibold tracking-wider text-amber-950/85">
+                {isBangla ? "সূরা আল-আলাক্ব • আয়াত ১" : "Surah Al-Alaq • Verse 1"}
+              </span>
+            </div>
+
+            <div dir="rtl" lang="ar" className="my-1 sm:my-1.5">
+              <p
+                className="text-2xl sm:text-3xl md:text-4xl font-bold leading-relaxed font-arabic text-emerald-950 select-none drop-shadow-[0_1px_5px_rgba(212,175,55,0.25)]"
+                style={{
+                  fontFamily:
+                    "var(--font-amiri), 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif",
+                }}
+              >
+                اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ
+              </p>
+            </div>
+
+            <p className="text-xs sm:text-sm font-semibold tracking-wide text-amber-950 mt-1">
+              {isBangla
+                ? "ইক্বরা বিসমি রাব্বিকাল্লাযী খালাক্ব"
+                : "Iqra bismi rabbikallazi khalaq"}
+            </p>
+
+            <p className="text-[11px] sm:text-xs text-stone-700 font-serif italic mt-0.5">
+              {isBangla
+                ? "— পাঠ করুন আপনার প্রতিপালকের নামে, যিনি সৃষ্টি করেছেন।"
+                : "— Read in the name of your Lord who created."}
+            </p>
+          </div>
+
+          {/* Divider */}
+          <IslamicDivider className="w-48 sm:w-64 my-3.5 animate-splash-fade-up [animation-delay:520ms]" />
+
+          {/* 3. Iqra Scholarship Branding */}
+          <div className="mb-5 space-y-0.5 animate-splash-fade-up [animation-delay:580ms]">
+            <h2 className="text-lg sm:text-2xl font-bold tracking-tight text-stone-900">
               ইক্বরা মেধা বৃত্তি পরীক্ষা
             </h2>
             <p className="text-xs sm:text-sm text-stone-600 font-medium">
@@ -234,8 +270,8 @@ export default function SplashScreen() {
             </p>
           </div>
 
-          {/* 5. Primary Action: Continue to Website */}
-          <div className="w-full max-w-xs animate-splash-fade-up [animation-delay:750ms]">
+          {/* 4. Primary Action: Continue to Website */}
+          <div className="w-full max-w-xs animate-splash-fade-up [animation-delay:640ms]">
             <button
               type="button"
               onClick={handleDismiss}
@@ -247,8 +283,8 @@ export default function SplashScreen() {
             </button>
           </div>
 
-          {/* 6. Settings / Skip Duration Options */}
-          <div className="mt-6 w-full animate-splash-fade-up [animation-delay:850ms]">
+          {/* 5. Settings / Skip Duration Options */}
+          <div className="mt-5 w-full animate-splash-fade-up [animation-delay:720ms]">
             <SplashSettings
               onSelectOption={handleSkipOption}
               isBangla={isBangla}
