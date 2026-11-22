@@ -20,6 +20,7 @@ import {
   Globe,
   ExternalLink,
   FileText,
+  Award,
 } from "lucide-react";
 import { useState } from "react";
 import SignOutButton from "./SignOutButton";
@@ -65,6 +66,11 @@ const navigation = [
     title: "Prize Confirmation",
     href: "/admin/prizes",
     icon: Trophy,
+  },
+  {
+    title: "Certificates",
+    href: "/admin/certificates",
+    icon: Award,
   },
   {
     title: "Notices",

@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { cn } from "cn";
 import {
   Search,
   CheckCircle2,
@@ -421,6 +423,17 @@ export default function PrizeTable({
                       {/* Actions */}
                       <td className="px-4 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          <Link
+                            href={`/admin/certificates?search=${encodeURIComponent(item.studentId)}`}
+                            className={cn(
+                              buttonVariants({ variant: "outline", size: "sm" }),
+                              "h-8 gap-1 border-purple-200 bg-purple-50 text-xs text-purple-700 hover:bg-purple-100 hover:text-purple-800 dark:border-purple-800 dark:bg-purple-950/40 dark:text-purple-300"
+                            )}
+                            title="সনদ দেখুন / প্রিন্ট"
+                          >
+                            <Award className="size-3.5" />
+                            <span className="hidden sm:inline">সনদ</span>
+                          </Link>
                           {isReceived ? (
                             <Button
                               variant="outline"

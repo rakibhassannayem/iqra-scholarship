@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Trophy,
   CheckCircle2,
@@ -9,10 +10,12 @@ import {
   Save,
   Loader2,
   RotateCcw,
+  Award,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "cn";
 import {
   Table,
   TableBody,
@@ -310,20 +313,35 @@ export default function ResultTable({
 
                   {/* Action Button */}
                   <TableCell className="text-right">
-                    <Button
-                      size="sm"
-                      variant={isDirty ? "default" : "outline"}
-                      disabled={!isDirty || isSaving || !hasValidNumber}
-                      onClick={() => handleRowSave(student.studentDbId)}
-                      className="h-8 gap-1 text-xs"
-                    >
-                      {isSaving ? (
-                        <Loader2 className="size-3.5 animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="size-3.5" />
+                    <div className="flex items-center justify-end gap-1.5">
+                      {matchedCat && (
+                        <Link
+                          href={`/admin/certificates?search=${encodeURIComponent(student.studentId)}`}
+                          className={cn(
+                            buttonVariants({ variant: "outline", size: "sm" }),
+                            "h-8 gap-1 border-purple-200 bg-purple-50 text-xs text-purple-700 hover:bg-purple-100 hover:text-purple-800 dark:border-purple-800 dark:bg-purple-950/40 dark:text-purple-300"
+                          )}
+                          title="সনদ দেখুন / প্রিন্ট"
+                        >
+                          <Award className="size-3.5" />
+                          <span className="hidden sm:inline">সনদ</span>
+                        </Link>
                       )}
-                      Save
-                    </Button>
+                      <Button
+                        size="sm"
+                        variant={isDirty ? "default" : "outline"}
+                        disabled={!isDirty || isSaving || !hasValidNumber}
+                        onClick={() => handleRowSave(student.studentDbId)}
+                        className="h-8 gap-1 text-xs"
+                      >
+                        {isSaving ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="size-3.5" />
+                        )}
+                        Save
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               );
