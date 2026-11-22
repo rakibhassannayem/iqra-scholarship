@@ -230,7 +230,7 @@ export function CertificateCartouche({
           y="35"
           textAnchor="middle"
           fill="#fef08a"
-          stroke="#ca8a04"
+          stroke="#fde047"
           strokeWidth="0.8"
           fontSize="23"
           fontWeight="900"
