@@ -32,6 +32,8 @@ export async function GET(_request: Request, { params }: RouteContext) {
         id: students.id,
         studentId: students.studentId,
         name: students.name,
+        fatherName: students.fatherName,
+        motherName: students.motherName,
         class: students.class,
         roll: students.roll,
         institutionId: students.institutionId,
@@ -92,6 +94,8 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     const body = await request.json();
     const {
       name,
+      fatherName,
+      motherName,
       institutionId,
       class: studentClass,
       roll,
@@ -148,6 +152,8 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 
     const updateData: {
       name: string;
+      fatherName?: string | null;
+      motherName?: string | null;
       institutionId: number;
       class: number;
       roll: number;
@@ -160,6 +166,20 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       roll,
       studentId: newStudentId,
     };
+
+    if (fatherName !== undefined) {
+      updateData.fatherName =
+        typeof fatherName === "string" && fatherName.trim()
+          ? fatherName.trim()
+          : null;
+    }
+
+    if (motherName !== undefined) {
+      updateData.motherName =
+        typeof motherName === "string" && motherName.trim()
+          ? motherName.trim()
+          : null;
+    }
 
     if (Number.isInteger(customScholarshipId) && customScholarshipId > 0) {
       updateData.scholarshipId = customScholarshipId;
@@ -181,6 +201,8 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         previousData: {
           studentId: existingStudent.studentId,
           name: existingStudent.name,
+          fatherName: existingStudent.fatherName,
+          motherName: existingStudent.motherName,
           institutionId: existingStudent.institutionId,
           scholarshipId: existingStudent.scholarshipId,
           class: existingStudent.class,
@@ -189,6 +211,8 @@ export async function PATCH(request: Request, { params }: RouteContext) {
         newData: {
           studentId: student.studentId,
           name: student.name,
+          fatherName: student.fatherName,
+          motherName: student.motherName,
           institutionId: student.institutionId,
           scholarshipId: student.scholarshipId,
           class: student.class,
@@ -259,6 +283,8 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
         previousData: {
           studentId: deletedStudent.studentId,
           name: deletedStudent.name,
+          fatherName: deletedStudent.fatherName,
+          motherName: deletedStudent.motherName,
           institutionId: deletedStudent.institutionId,
           scholarshipId: deletedStudent.scholarshipId,
           class: deletedStudent.class,
@@ -293,3 +319,6 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
     );
   }
 }
+
+export { PATCH as PUT };
+

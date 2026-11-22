@@ -61,6 +61,8 @@ export default function DirectRegisterModal({
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const [studentName, setStudentName] = useState("");
+  const [fatherName, setFatherName] = useState("");
+  const [motherName, setMotherName] = useState("");
   const [classId, setClassId] = useState("");
   const [roll, setRoll] = useState("");
   const [selectedScholarshipId, setSelectedScholarshipId] = useState<string>("");
@@ -132,6 +134,8 @@ export default function DirectRegisterModal({
     setSelectedInstitution(null);
     setShowSuggestions(false);
     setStudentName("");
+    setFatherName("");
+    setMotherName("");
     setClassId("");
     setRoll("");
     setSelectedScholarshipId("");
@@ -175,6 +179,8 @@ export default function DirectRegisterModal({
       institutionId: selectedInstitution.id,
       scholarshipId: selectedScholarshipId ? Number(selectedScholarshipId) : undefined,
       name: studentName.trim(),
+      fatherName: fatherName.trim() || undefined,
+      motherName: motherName.trim() || undefined,
       class: numericClass,
       roll: numericRoll,
     });
@@ -285,6 +291,37 @@ export default function DirectRegisterModal({
               }}
               placeholder="Enter student full name"
             />
+          </div>
+
+          {/* Father & Mother Name */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="admin-reg-father">
+                Father's Name{" "}
+                <span className="text-xs text-muted-foreground">(Optional)</span>
+              </Label>
+              <Input
+                id="admin-reg-father"
+                maxLength={150}
+                value={fatherName}
+                onChange={(e) => setFatherName(e.target.value)}
+                placeholder="পিতার নাম"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="admin-reg-mother">
+                Mother's Name{" "}
+                <span className="text-xs text-muted-foreground">(Optional)</span>
+              </Label>
+              <Input
+                id="admin-reg-mother"
+                maxLength={150}
+                value={motherName}
+                onChange={(e) => setMotherName(e.target.value)}
+                placeholder="মাতার নাম"
+              />
+            </div>
           </div>
 
           {/* Class and Roll */}

@@ -61,7 +61,7 @@ export default function StudentDetailsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -134,6 +134,29 @@ export default function StudentDetailsModal({
                 Roll No: <span className="font-medium text-foreground">{student.roll}</span>
               </p>
             </div>
+
+            {(student.fatherName || student.motherName) && (
+              <div className="col-span-2 rounded-lg border p-3">
+                <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                  <User className="size-4 shrink-0 text-primary" />
+                  <span className="text-xs font-medium">Parent Information</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {student.fatherName && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Father's Name</p>
+                      <p className="font-semibold text-foreground">{student.fatherName}</p>
+                    </div>
+                  )}
+                  {student.motherName && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Mother's Name</p>
+                      <p className="font-semibold text-foreground">{student.motherName}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="rounded-lg border p-3">
               <div className="flex items-center gap-2 text-muted-foreground">

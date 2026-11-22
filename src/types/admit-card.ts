@@ -11,4 +11,3 @@ export type AdmitCardData = {
   examDate?: string;
   examTime?: string;
 };
-

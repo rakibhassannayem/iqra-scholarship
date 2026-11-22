@@ -41,6 +41,8 @@ export const students = pgTable("students", {
     .references(() => institutions.id),
   scholarshipId: integer("scholarship_id").references(() => scholarships.id),
   name: varchar("name", { length: 255 }).notNull(),
+  fatherName: varchar("father_name", { length: 255 }),
+  motherName: varchar("mother_name", { length: 255 }),
   class: integer("class").notNull(),
   roll: integer("roll").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

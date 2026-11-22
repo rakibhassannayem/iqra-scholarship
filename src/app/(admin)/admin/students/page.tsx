@@ -78,7 +78,7 @@ export default function StudentRegistrationsPage() {
       const url = isEditing
         ? `/api/students/${editingStudent.id}`
         : "/api/students";
-      const method = isEditing ? "PUT" : "POST";
+      const method = isEditing ? "PATCH" : "POST";
 
       const response = await fetch(url, {
         method,
@@ -184,6 +184,8 @@ export default function StudentRegistrationsPage() {
           editingStudent
             ? {
                 name: editingStudent.name,
+                fatherName: editingStudent.fatherName,
+                motherName: editingStudent.motherName,
                 institutionId: editingStudent.institutionId,
                 scholarshipId: editingStudent.scholarshipId,
                 class: editingStudent.class,

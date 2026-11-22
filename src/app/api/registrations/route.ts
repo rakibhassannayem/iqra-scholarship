@@ -33,6 +33,8 @@ export async function GET(request: Request) {
         studentDbId: students.id,
         studentId: students.studentId,
         studentName: students.name,
+        fatherName: students.fatherName,
+        motherName: students.motherName,
         studentClass: students.class,
         studentRoll: students.roll,
         institutionName: institutions.name,

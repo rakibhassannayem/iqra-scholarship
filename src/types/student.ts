@@ -2,6 +2,8 @@ export type Student = {
   id: number;
   studentId: string;
   name: string;
+  fatherName?: string | null;
+  motherName?: string | null;
   class: number;
   roll: number;
   institutionId: number;
@@ -14,6 +16,8 @@ export type Student = {
 
 export type StudentFormValues = {
   name: string;
+  fatherName?: string;
+  motherName?: string;
   institutionId: number;
   scholarshipId?: number;
   class: number;
@@ -22,6 +26,8 @@ export type StudentFormValues = {
 
 export type StudentFormInitialValues = {
   name: string;
+  fatherName?: string | null;
+  motherName?: string | null;
   institutionId: number;
   scholarshipId?: number | null;
   class: number;
@@ -32,6 +38,8 @@ export type StudentSummary = {
   id: number;
   studentId: string;
   name: string;
+  fatherName?: string | null;
+  motherName?: string | null;
   class: number;
   roll: number;
   institutionId: number;

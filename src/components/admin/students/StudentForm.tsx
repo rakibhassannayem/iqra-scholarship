@@ -34,6 +34,8 @@ type StudentFormProps = {
 
 const emptyForm: StudentFormValues = {
   name: "",
+  fatherName: "",
+  motherName: "",
   institutionId: 0,
   scholarshipId: undefined,
   class: 1,
@@ -110,6 +112,8 @@ export default function StudentForm({
           }
           setForm({
             name: initialValues.name,
+            fatherName: initialValues.fatherName ?? "",
+            motherName: initialValues.motherName ?? "",
             institutionId: initialValues.institutionId,
             scholarshipId: initialValues.scholarshipId ?? undefined,
             class: initialValues.class,
@@ -286,6 +290,43 @@ export default function StudentForm({
                 setLocalError("");
               }}
             />
+          </div>
+
+          {/* Father & Mother Name */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="father-name">
+                Father's Name{" "}
+                <span className="text-xs text-muted-foreground">(Optional)</span>
+              </Label>
+              <Input
+                id="father-name"
+                maxLength={150}
+                placeholder="পিতার নাম"
+                value={form.fatherName ?? ""}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, fatherName: e.target.value }));
+                  setLocalError("");
+                }}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="mother-name">
+                Mother's Name{" "}
+                <span className="text-xs text-muted-foreground">(Optional)</span>
+              </Label>
+              <Input
+                id="mother-name"
+                maxLength={150}
+                placeholder="মাতার নাম"
+                value={form.motherName ?? ""}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, motherName: e.target.value }));
+                  setLocalError("");
+                }}
+              />
+            </div>
           </div>
 
           {/* Class & Roll */}

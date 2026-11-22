@@ -75,6 +75,8 @@ export async function GET(request: Request) {
         id: students.id,
         studentId: students.studentId,
         name: students.name,
+        fatherName: students.fatherName,
+        motherName: students.motherName,
         class: students.class,
         roll: students.roll,
         institutionId: students.institutionId,
@@ -116,6 +118,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       name,
+      fatherName,
+      motherName,
       institutionId,
       class: rawClass,
       roll: rawRoll,
@@ -212,6 +216,15 @@ export async function POST(request: Request) {
     const year = String(new Date().getFullYear()).slice(-2);
     const studentId = `${year}${institution.eiin}${parsedClass}${parsedRoll}`;
 
+    const cleanFatherName =
+      typeof fatherName === "string" && fatherName.trim()
+        ? fatherName.trim()
+        : null;
+    const cleanMotherName =
+      typeof motherName === "string" && motherName.trim()
+        ? motherName.trim()
+        : null;
+
     const result = await db.transaction(async (tx) => {
       const [student] = await tx
         .insert(students)
@@ -220,6 +233,8 @@ export async function POST(request: Request) {
           institutionId: parsedInstitutionId,
           scholarshipId: targetScholarshipId,
           name: name.trim(),
+          fatherName: cleanFatherName,
+          motherName: cleanMotherName,
           class: parsedClass,
           roll: parsedRoll,
         })
@@ -245,6 +260,8 @@ export async function POST(request: Request) {
         newData: {
           studentId: student.studentId,
           name: student.name,
+          fatherName: student.fatherName,
+          motherName: student.motherName,
           institutionId: student.institutionId,
           scholarshipId: student.scholarshipId,
           class: student.class,

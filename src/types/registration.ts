@@ -3,6 +3,8 @@ export type Registration = {
   studentDbId: number;
   studentId: string;
   studentName: string;
+  fatherName?: string | null;
+  motherName?: string | null;
   studentClass: number;
   studentRoll: number;
   institutionId?: number;
@@ -19,6 +21,8 @@ export type DirectRegisterFormData = {
   institutionId: number;
   scholarshipId?: number;
   name: string;
+  fatherName?: string;
+  motherName?: string;
   class: number;
   roll: number;
 };

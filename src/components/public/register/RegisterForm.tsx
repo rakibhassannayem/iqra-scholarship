@@ -40,6 +40,8 @@ export default function RegisterForm() {
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const [studentName, setStudentName] = useState("");
+  const [fatherName, setFatherName] = useState("");
+  const [motherName, setMotherName] = useState("");
   const [classId, setClassId] = useState("");
   const [roll, setRoll] = useState("");
 
@@ -173,6 +175,8 @@ export default function RegisterForm() {
         },
         body: JSON.stringify({
           name: studentName.trim(),
+          fatherName: fatherName.trim() || undefined,
+          motherName: motherName.trim() || undefined,
           institutionId: selectedInstitution.id,
           class: Number(classId),
           roll: numericRoll,
@@ -220,6 +224,8 @@ export default function RegisterForm() {
     setInstitutionName("");
     setSelectedInstitution(null);
     setStudentName("");
+    setFatherName("");
+    setMotherName("");
     setClassId("");
     setRoll("");
     setErrorMessage("");
@@ -458,6 +464,50 @@ export default function RegisterForm() {
                 }
                 className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label htmlFor="reg-father-name" className="text-sm font-medium">
+                  {isBangla ? "পিতার নাম" : "Father's Name"}
+                </label>
+
+                <input
+                  id="reg-father-name"
+                  maxLength={150}
+                  value={fatherName}
+                  onChange={(event) => {
+                    setFatherName(event.target.value);
+                    setAdmitCardData(null);
+                    setErrorMessage("");
+                  }}
+                  placeholder={
+                    isBangla ? "পিতার নাম লিখুন" : "Enter father's name"
+                  }
+                  className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="reg-mother-name" className="text-sm font-medium">
+                  {isBangla ? "মাতার নাম" : "Mother's Name"}
+                </label>
+
+                <input
+                  id="reg-mother-name"
+                  maxLength={150}
+                  value={motherName}
+                  onChange={(event) => {
+                    setMotherName(event.target.value);
+                    setAdmitCardData(null);
+                    setErrorMessage("");
+                  }}
+                  placeholder={
+                    isBangla ? "মাতার নাম লিখুন" : "Enter mother's name"
+                  }
+                  className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
