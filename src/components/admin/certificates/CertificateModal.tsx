@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Printer, Edit3, Check, Award, X } from "lucide-react";
 import type { CertificateData } from "@/types/certificate";
-import CertificateView from "./CertificateView";
+import CertificateView, { printIsolatedCertificates } from "./CertificateView";
 
 type CertificateModalProps = {
   certificate: CertificateData | null;
@@ -41,9 +41,15 @@ export default function CertificateModal({
     setFormData((prev) => (prev ? { ...prev, [field]: val } : null));
   }
 
+  function handleModalPrint() {
+    if (!formData) return;
+    const filename = formData.studentId || String(formData.studentDbId);
+    printIsolatedCertificates(filename);
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-5xl max-h-[92vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-w-[95vw] sm:max-w-5xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 print:max-w-none print:max-h-none print:overflow-visible print:p-0 print:border-none print:shadow-none print:bg-white">
         <DialogHeader className="print:hidden pb-2 border-b">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -61,6 +67,15 @@ export default function CertificateModal({
             </div>
 
             <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleModalPrint}
+                className="gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs"
+              >
+                <Printer className="size-3.5" /> প্রিন্ট / PDF
+              </Button>
+
               <Button
                 type="button"
                 variant={isEditing ? "default" : "outline"}
@@ -84,7 +99,7 @@ export default function CertificateModal({
 
         {/* Quick Edit Panel (if editing is active) */}
         {isEditing && (
-          <div className="my-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+          <div className="print:hidden my-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
             <p className="text-xs font-bold text-amber-900">
               প্রয়োজনে প্রিন্ট করার পূর্বে সনদের তথ্য সাময়িকভাবে পরিবর্তন করুন:
             </p>

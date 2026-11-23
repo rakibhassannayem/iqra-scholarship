@@ -285,9 +285,6 @@ export default function ResultTable({
                             <Trophy className="size-3" />
                             {matchedCat.name}
                           </Badge>
-                          <span className="text-xs text-emerald-600 dark:text-emerald-400">
-                            (Awarded)
-                          </span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5">
@@ -314,19 +311,6 @@ export default function ResultTable({
                   {/* Action Button */}
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1.5">
-                      {matchedCat && (
-                        <Link
-                          href={`/admin/certificates?search=${encodeURIComponent(student.studentId)}`}
-                          className={cn(
-                            buttonVariants({ variant: "outline", size: "sm" }),
-                            "h-8 gap-1 border-purple-200 bg-purple-50 text-xs text-purple-700 hover:bg-purple-100 hover:text-purple-800 dark:border-purple-800 dark:bg-purple-950/40 dark:text-purple-300"
-                          )}
-                          title="সনদ দেখুন / প্রিন্ট"
-                        >
-                          <Award className="size-3.5" />
-                          <span className="hidden sm:inline">সনদ</span>
-                        </Link>
-                      )}
                       <Button
                         size="sm"
                         variant={isDirty ? "default" : "outline"}
