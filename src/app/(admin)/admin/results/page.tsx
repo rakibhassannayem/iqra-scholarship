@@ -61,7 +61,12 @@ export default function AdminResultManagementPage() {
             setSelectedScholarshipId(String(active.id));
           } else if (sData.length > 0) {
             setSelectedScholarshipId(String(sData[0].id));
+          } else {
+            // No scholarships in database
+            setLoading(false);
           }
+        } else {
+          setLoading(false);
         }
 
         if (institutionsRes.ok) {
@@ -70,6 +75,7 @@ export default function AdminResultManagementPage() {
         }
       } catch (err) {
         console.error("Failed to load initial metadata:", err);
+        setLoading(false);
       }
     }
 
@@ -78,7 +84,11 @@ export default function AdminResultManagementPage() {
 
   // 2. Fetch results based on filters
   const fetchResults = useCallback(async () => {
-    if (!selectedScholarshipId) return;
+    if (!selectedScholarshipId) {
+      setLoading(false);
+      setStudents([]);
+      return;
+    }
 
     setLoading(true);
     setError("");
@@ -121,6 +131,9 @@ export default function AdminResultManagementPage() {
   useEffect(() => {
     if (selectedScholarshipId) {
       void fetchResults();
+    } else {
+      setLoading(false);
+      setStudents([]);
     }
   }, [fetchResults, selectedScholarshipId]);
 
@@ -305,11 +318,15 @@ export default function AdminResultManagementPage() {
               onChange={(e) => setSelectedScholarshipId(e.target.value)}
               className="h-9 w-full rounded-md border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              {scholarships.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} {s.isActive ? "(Active)" : ""}
-                </option>
-              ))}
+              {scholarships.length === 0 ? (
+                <option value="">No scholarships found</option>
+              ) : (
+                scholarships.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} {s.isActive ? "(Active)" : ""}
+                  </option>
+                ))
+              )}
             </select>
           </div>
 
@@ -393,6 +410,7 @@ export default function AdminResultManagementPage() {
         students={students}
         categories={categories}
         loading={loading}
+        hasScholarship={scholarships.length > 0}
         onSaveSingle={handleSaveSingle}
         onSaveBulk={handleSaveBulk}
       />

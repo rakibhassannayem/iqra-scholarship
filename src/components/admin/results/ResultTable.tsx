@@ -31,6 +31,7 @@ type ResultTableProps = {
   students: AdminResultItem[];
   categories: Category[];
   loading: boolean;
+  hasScholarship?: boolean;
   onSaveSingle: (studentId: number, marks: number) => Promise<void>;
   onSaveBulk: (entries: { studentId: number; marks: number }[]) => Promise<void>;
 };
@@ -58,6 +59,7 @@ export default function ResultTable({
   students,
   categories,
   loading,
+  hasScholarship = true,
   onSaveSingle,
   onSaveBulk,
 }: ResultTableProps) {
@@ -143,12 +145,31 @@ export default function ResultTable({
     );
   }
 
+  if (!hasScholarship) {
+    return (
+      <div className="rounded-xl border border-dashed bg-card p-12 text-center text-muted-foreground">
+        <p className="text-base font-semibold">কোনো বৃত্তি কর্মসূচি পাওয়া যায়নি</p>
+        <p className="mt-1 text-sm">
+          ফলাফল ব্যবস্থাপনা শুরু করার আগে একটি বৃত্তি কর্মসূচি তৈরি করুন।
+        </p>
+        <div className="mt-4">
+          <Link
+            href="/admin/scholarships"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            বৃত্তি কর্মসূচি তৈরি করুন &rarr;
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (students.length === 0) {
     return (
       <div className="rounded-xl border border-dashed bg-card p-12 text-center text-muted-foreground">
-        <p className="text-base font-semibold">No students found</p>
+        <p className="text-base font-semibold">কোনো শিক্ষার্থী বা ফলাফল পাওয়া যায়নি</p>
         <p className="mt-1 text-sm">
-          No registered students match the selected filter criteria.
+          নির্বাচিত ফিল্টারের সাথে মিলে এমন কোনো নিবন্ধিত শিক্ষার্থী পাওয়া যায়নি।
         </p>
       </div>
     );
